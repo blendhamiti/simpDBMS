@@ -1,3 +1,7 @@
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -11,15 +15,27 @@ public class Database {
         tables = new ArrayList<>();
     }
 
+    public Database(Path path) {
+        name = path.getFileName().toString();
+        tables = new ArrayList<>();
+        fetchTables(path);
+    }
+
+    private void fetchTables(Path path) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+            for (Path file : stream)
+                tables.add(new Table(file));
+        } catch (IOException e) {
+            System.out.println(e.toString());
+        }
+    }
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    private void fetchTables() {
     }
 
     public List<Table> getTables() {

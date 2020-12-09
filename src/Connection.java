@@ -1,14 +1,32 @@
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class Connection {
-    private String path;
+    private Path path;
     private List<Database> databases;
 
-    public Connection(String path) {
+    public Connection(Path path) {
         this.path = path;
+        try {
+            Files.createDirectory(path);
+        } catch (IOException e) {
+            System.out.println(e.toString());
+        }
         databases = new ArrayList<>();
+        fetchDatabases();
+    }
+
+    private void fetchDatabases() {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+            for (Path dir : stream)
+                databases.add(new Database(dir));
+        } catch (IOException e) {
+            System.out.println(e.toString());
+        }
     }
 
     public List<Database> getDatabases() {
@@ -50,5 +68,35 @@ public class Connection {
                 "path='" + path + '\'' +
                 ", databases=" + databases +
                 '}';
+    }
+
+    public static void main(String[] args) {
+        // list directory contents
+//        Path path = FileSystems.getDefault().getPath("data", "company");
+//        System.out.println(Files.exists(path));
+//        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+//            for (Path file : stream) {
+//                System.out.println(file.getFileName());
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+//        Path path2 = FileSystems.getDefault().getPath("data");
+//        try {
+//            Files.createDirectory(path2);
+//        } catch (FileAlreadyExistsException e) {
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+        Path path = FileSystems.getDefault().getPath("data");
+        Connection connection = new Connection(path);
+
+
+
+
+
     }
 }

@@ -1,3 +1,4 @@
+import java.nio.file.Path;
 import java.util.*;
 
 public class Index {
@@ -11,15 +12,22 @@ public class Index {
         entries = new TreeMap<>();
     }
 
+    public Index(Path path) {
+        this.name = path.getFileName().toString();
+        this.column = column;
+        entries = new TreeMap<>();
+        fetchIndex();
+    }
+
+    private void fetchIndex() {
+    }
+
     public String getName() {
         return name;
     }
 
     public Column getColumn() {
         return column;
-    }
-
-    private void fetchIndex() {
     }
 
     public void addEntry(Record record) {

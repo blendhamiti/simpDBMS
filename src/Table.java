@@ -1,3 +1,7 @@
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -15,6 +19,29 @@ public class Table {
         indexes = new ArrayList<>();
         primaryKey = null;
         rowCount = 0;
+    }
+
+    public Table (Path path) {
+        this.name = path.getFileName().toString();
+        columns = new ArrayList<>();
+        fetchColumns(path);
+        indexes = new ArrayList<>();
+        fetchIndexes(path);
+        primaryKey = null;
+        rowCount = 0;
+    }
+
+
+    private void fetchColumns(Path path) {
+    }
+
+    private void fetchIndexes(Path path) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+            for (Path file : stream)
+                indexes.add(new Index(file));
+        } catch (IOException e) {
+            System.out.println(e.toString());
+        }
     }
 
     public String getName() {
@@ -51,12 +78,6 @@ public class Table {
 
     public void rowCountDecrement(int decrement) {
         rowCount -= decrement;
-    }
-
-    private void fetchColumns() {
-    }
-
-    private void fetchIndexes() {
     }
 
     public List<Index> getIndexes() {
