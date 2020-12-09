@@ -1,4 +1,4 @@
 public enum Type {
-    STRING,
-    INTEGER
+    INTEGER,
+    STRING
 }
