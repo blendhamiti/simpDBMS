@@ -8,43 +8,48 @@ import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
+import java.nio.file.Paths;
+import java.util.*;
 
 
 public class Table {
+    private Path root;
     private String name;
-    private List<Column> columns;
-    private List<Index> indexes;
+    private Collection<Column> columns;
+    private Collection<Index> indexes;
     private Column primaryKey;
     private int rowCount;
 
-    public Table (String name) {
+    public Table (String name, Path root) {
+        this.root = root;
         this.name = name;
-        columns = new ArrayList<>();
-        indexes = new ArrayList<>();
+        try {
+            Files.createDirectory(Paths.get(root.toString(), name));
+        } catch (IOException e) {
+            System.out.println(e.toString());
+        }
+        columns = new HashSet<>();
+        indexes = new HashSet<>();
         primaryKey = null;
         rowCount = 0;
     }
 
-    public Table (Path tableDir) {
-        this.name = tableDir.getFileName().toString();
-        fetchMetadata(tableDir);
-        fetchIndexes(tableDir);
+    public Table (Path table) {
+        this.name = table.getFileName().toString();
+        fetchMetadata(table);
+        fetchIndexes(table);
     }
 
 
-    private void fetchMetadata(Path tableDir) {
+    private void fetchMetadata(Path table) {
         columns = new ArrayList<>();
         primaryKey = null;
         rowCount = 0;
         try {
             byte[] metadataBytes = Files.readAllBytes(
-                    Files.list(tableDir)
+                    Files.list(table)
                         .filter(file -> file.getFileName().toString().equals("metadata.json"))
-                        .findFirst()
+                        .findAny()
                         .get());
             String metadataStr = new String(metadataBytes);
 
@@ -69,9 +74,9 @@ public class Table {
         }
     }
 
-    private void fetchIndexes(Path tableDir) {
+    private void fetchIndexes(Path table) {
         indexes = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(tableDir)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(table)) {
             for (Path file : stream) {
                 if (file.getFileName().toString().startsWith("index")) {
                     indexes.add(new Index(file, getColumn(file.getFileName().toString().split("_")[1])));
@@ -118,7 +123,7 @@ public class Table {
         rowCount -= decrement;
     }
 
-    public List<Index> getIndexes() {
+    public Collection<Index> getIndexes() {
         return indexes;
     }
 
@@ -137,7 +142,7 @@ public class Table {
         indexes.remove(index);
     }
 
-    public List<Column> getColumns() {
+    public Collection<Column> getColumns() {
         return columns;
     }
 

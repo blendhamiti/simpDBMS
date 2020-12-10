@@ -2,29 +2,35 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class Database {
+    private Path root;
     private String name;
-    private List<Table> tables;
+    private Collection<Table> tables;
 
-    public Database(String name) {
+    public Database(String name, Path root) {
+        this.root = root;
         this.name = name;
-        tables = new ArrayList<>();
+        try {
+            Files.createDirectory(Paths.get(root.getFileName().toString(), name));
+        } catch (IOException e) {
+            System.out.println(e.toString());
+        }
+        tables = new HashSet<>();
     }
 
-    public Database(Path databaseDir) {
-        name = databaseDir.getFileName().toString();
-        fetchTables(databaseDir);
+    public Database(Path database) {
+        name = database.getFileName().toString();
+        fetchTables(database);
     }
 
-    private void fetchTables(Path databaseDir) {
-        tables = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(databaseDir)) {
-            for (Path tableDir : stream)
-                tables.add(new Table(tableDir));
+    private void fetchTables(Path database) {
+        tables = new HashSet<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(database)) {
+            for (Path table : stream)
+                tables.add(new Table(table));
         } catch (IOException e) {
             System.out.println(e.toString());
         }
@@ -35,10 +41,11 @@ public class Database {
     }
 
     public void setName(String name) {
+
         this.name = name;
     }
 
-    public List<Table> getTables() {
+    public Collection<Table> getTables() {
         return tables;
     }
 
@@ -50,12 +57,19 @@ public class Database {
         return null;
     }
 
-    public void addTable(Table table) {
-        tables.add(table);
+    public boolean containsTable(String name) {
+        return getTable(name) != null;
     }
 
-    public void removeTable(Table table) {
-        tables.remove(table);
+    public boolean createTable(String name) {
+        if (containsTable(name)) return false;
+        Table table = new Table(name, Paths.get(root.toString(), this.name));
+        tables.add(table);
+        return true;
+    }
+
+    public boolean removeTable(Table table) {
+        return tables.remove(table);
     }
 
     @Override

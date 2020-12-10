@@ -1,23 +1,16 @@
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Connection {
-    private Path path;
-    private List<Database> databases;
+    private Path root;
+    private Collection<Database> databases;
 
-    public Connection(Path rootDir) {
-        this.path = rootDir;
+    public Connection(Path root) {
+        this.root = root;
         try {
-            Files.createDirectory(rootDir);
+            Files.createDirectory(root);
         } catch (IOException e) {
             System.out.println(e.toString());
         }
@@ -25,16 +18,16 @@ public class Connection {
     }
 
     private void fetchDatabases() {
-        databases = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-            for (Path databaseDir : stream)
-                databases.add(new Database(databaseDir));
+        databases = new HashSet<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(root)) {
+            for (Path database : stream)
+                databases.add(new Database(database));
         } catch (IOException e) {
             System.out.println(e.toString());
         }
     }
 
-    public List<Database> getDatabases() {
+    public Collection<Database> getDatabases() {
         return databases;
     }
 
@@ -46,12 +39,32 @@ public class Connection {
         return null;
     }
 
-    public void addDatabase(Database database) {
-        databases.add(database);
+    public boolean containsDatabase(String name) {
+        return getDatabase(name) != null;
     }
 
-    public void removeDatabase(Database database) {
-        databases.remove(database);
+    public boolean createDatabase(String name) {
+        if (containsDatabase(name)) return false;
+        Database database = new Database(name, root);
+        databases.add(database);
+        return true;
+    }
+
+    public boolean removeDatabase(String name) {
+        if (!containsDatabase(name)) return false;
+        try {
+            Files.walk(Paths.get(root.toString(), name))
+                    .map(Path::toFile)
+                    .sorted(Comparator.reverseOrder())
+                    .forEachOrdered(File::delete);
+        } catch (IOException e) {
+            System.out.println(e.toString());
+        }
+        if (!Files.exists(Paths.get(root.toString(), name))) {
+            databases.remove(getDatabase(name));
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -59,18 +72,18 @@ public class Connection {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Connection that = (Connection) o;
-        return path.equals(that.path);
+        return root.equals(that.root);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(path);
+        return Objects.hash(root);
     }
 
     @Override
     public String toString() {
         return "Connection{" +
-                "path='" + path + '\'' +
+                "path='" + root + '\'' +
                 ", databases=" + databases +
                 '}';
     }
@@ -96,10 +109,21 @@ public class Connection {
 //            e.printStackTrace();
 //        }
 
+//        try {
+//            Files.walk(Paths.get(path.getFileName().toString()))
+//                .forEach(System.out::println);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
         Path path = FileSystems.getDefault().getPath("data");
         Connection connection = new Connection(path);
         System.out.println(connection.toString());
 
+//        connection.createDatabase("als");
+//        connection.getDatabase("als").createTable("ggh");
+
+//        System.out.println(connection.removeDatabase("als"));
 
 
 
