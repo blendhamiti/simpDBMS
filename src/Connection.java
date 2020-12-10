@@ -1,3 +1,8 @@
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -9,21 +14,21 @@ public class Connection {
     private Path path;
     private List<Database> databases;
 
-    public Connection(Path path) {
-        this.path = path;
+    public Connection(Path rootDir) {
+        this.path = rootDir;
         try {
-            Files.createDirectory(path);
+            Files.createDirectory(rootDir);
         } catch (IOException e) {
             System.out.println(e.toString());
         }
-        databases = new ArrayList<>();
         fetchDatabases();
     }
 
     private void fetchDatabases() {
+        databases = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-            for (Path dir : stream)
-                databases.add(new Database(dir));
+            for (Path databaseDir : stream)
+                databases.add(new Database(databaseDir));
         } catch (IOException e) {
             System.out.println(e.toString());
         }
@@ -93,7 +98,7 @@ public class Connection {
 
         Path path = FileSystems.getDefault().getPath("data");
         Connection connection = new Connection(path);
-
+        System.out.println(connection.toString());
 
 
 

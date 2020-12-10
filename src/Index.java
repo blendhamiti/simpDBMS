@@ -2,28 +2,22 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class Index {
-    private String name;
     private Column column;
     private Map<Record,List<Address>> entries;
 
     public Index(String name, Column column) {
-        this.name = name;
         this.column = column;
         entries = new TreeMap<>();
     }
 
-    public Index(Path path) {
-        this.name = path.getFileName().toString();
+    public Index(Path indexFile, Column column) {
         this.column = column;
+        fetchIndex(indexFile);
+    }
+
+    private void fetchIndex(Path indexFile) {
         entries = new TreeMap<>();
-        fetchIndex();
-    }
 
-    private void fetchIndex() {
-    }
-
-    public String getName() {
-        return name;
     }
 
     public Column getColumn() {
@@ -53,20 +47,20 @@ public class Index {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Index index = (Index) o;
-        return name.equals(index.name) &&
-                column.equals(index.column);
+        return column.equals(index.column) &&
+                Objects.equals(entries, index.entries);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, column);
+        return Objects.hash(column, entries);
     }
 
     @Override
     public String toString() {
         return "Index{" +
-                "name='" + name + '\'' +
-                ", column=" + column +
+                "column=" + column +
+                ", entries=" + entries +
                 '}';
     }
 }

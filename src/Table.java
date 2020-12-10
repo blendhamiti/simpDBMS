@@ -1,10 +1,18 @@
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+
 
 public class Table {
     private String name;
@@ -21,24 +29,54 @@ public class Table {
         rowCount = 0;
     }
 
-    public Table (Path path) {
-        this.name = path.getFileName().toString();
+    public Table (Path tableDir) {
+        this.name = tableDir.getFileName().toString();
+        fetchMetadata(tableDir);
+        fetchIndexes(tableDir);
+    }
+
+
+    private void fetchMetadata(Path tableDir) {
         columns = new ArrayList<>();
-        fetchColumns(path);
-        indexes = new ArrayList<>();
-        fetchIndexes(path);
         primaryKey = null;
         rowCount = 0;
+        try {
+            byte[] metadataBytes = Files.readAllBytes(
+                    Files.list(tableDir)
+                        .filter(file -> file.getFileName().toString().equals("metadata.json"))
+                        .findFirst()
+                        .get());
+            String metadataStr = new String(metadataBytes);
+
+            JSONParser parser = new JSONParser();
+            try {
+                JSONObject jsonMetadata = (JSONObject) parser.parse(metadataStr);
+                // fetch columns
+                JSONArray jsonColumnsArray = (JSONArray) jsonMetadata.get("columns");
+                for (Object jsonObject : jsonColumnsArray) {
+                    JSONObject jsonColumn = (JSONObject) jsonObject;
+                    columns.add(new Column(jsonColumn.get("name").toString(), jsonColumn.get("type").toString()));
+                }
+                // fetch primary key
+                primaryKey = getColumn(jsonMetadata.get("primaryKey").toString());
+                // fetch row count
+                rowCount = Integer.parseInt(jsonMetadata.get("rowCount").toString());
+            } catch (ParseException e) {
+                System.out.println(e.toString());
+            }
+        } catch (IOException e) {
+            System.out.println(e.toString());
+        }
     }
 
-
-    private void fetchColumns(Path path) {
-    }
-
-    private void fetchIndexes(Path path) {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-            for (Path file : stream)
-                indexes.add(new Index(file));
+    private void fetchIndexes(Path tableDir) {
+        indexes = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(tableDir)) {
+            for (Path file : stream) {
+                if (file.getFileName().toString().startsWith("index")) {
+                    indexes.add(new Index(file, getColumn(file.getFileName().toString().split("_")[1])));
+                }
+            }
         } catch (IOException e) {
             System.out.println(e.toString());
         }
@@ -84,9 +122,9 @@ public class Table {
         return indexes;
     }
 
-    public Index getIndex(String name) {
+    public Index getIndex(Column column) {
         for (Index i : indexes)
-            if (i.getName().equals(name))
+            if (i.getColumn().equals(column))
                 return i;
         return null;
     }
@@ -154,6 +192,9 @@ public class Table {
         return "Table{" +
                 "name='" + name + '\'' +
                 ", columns=" + columns +
+                ", indexes=" + indexes +
+                ", primaryKey=" + primaryKey +
+                ", rowCount=" + rowCount +
                 '}';
     }
 }

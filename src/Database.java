@@ -15,16 +15,16 @@ public class Database {
         tables = new ArrayList<>();
     }
 
-    public Database(Path path) {
-        name = path.getFileName().toString();
-        tables = new ArrayList<>();
-        fetchTables(path);
+    public Database(Path databaseDir) {
+        name = databaseDir.getFileName().toString();
+        fetchTables(databaseDir);
     }
 
-    private void fetchTables(Path path) {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-            for (Path file : stream)
-                tables.add(new Table(file));
+    private void fetchTables(Path databaseDir) {
+        tables = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(databaseDir)) {
+            for (Path tableDir : stream)
+                tables.add(new Table(tableDir));
         } catch (IOException e) {
             System.out.println(e.toString());
         }

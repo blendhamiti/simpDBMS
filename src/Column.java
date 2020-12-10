@@ -9,6 +9,16 @@ public class Column {
         this.type = type;
     }
 
+    public Column(String name, String type) {
+        this.name = name;
+        if      (type.equals(Type.INTEGER.name()))
+            this.type = Type.INTEGER;
+        else if (type.equals(Type.STRING.name()))
+            this.type = Type.STRING;
+        else
+            throw new IllegalArgumentException();
+    }
+
     public String getName() {
         return name;
     }
