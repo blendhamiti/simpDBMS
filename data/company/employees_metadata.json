@@ -1,0 +1,13 @@
+{
+  "primaryKey": "id",
+  "columns": [
+    {
+      "name": "id",
+      "type": "INTEGER"
+    },
+    {
+      "name": "name",
+      "type": "STRING"
+    }
+  ]
+}
