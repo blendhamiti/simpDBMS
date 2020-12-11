@@ -1,32 +1,21 @@
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
 public class Database {
-    private Path root;
-    private String name;
-    private Collection<Table> tables;
+    private final Path root;
+    private final Collection<Table> tables;
 
-    public Database(String name, Path root) {
-        this.name = name;
-        this.root = Paths.get(root.toString(), name);
-        FileManager.createDirectory(root);
-        tables = new HashSet<>();
-    }
-
-    public Database(Path database) {
-        root = database;
-        name = database.getFileName().toString();
+    public Database(Path root) {
+        this.root = root;
+        FileManager.getOrCreateDirectory(root);
         tables = new HashSet<>();
         Objects.requireNonNull(FileManager.getSubDirectories(root))
                 .forEach(dir -> tables.add(new Table(dir)));
     }
 
     public String getName() {
-        return name;
+        return root.getFileName().toString();
     }
 
     public Collection<Table> getTables() {
@@ -46,7 +35,7 @@ public class Database {
 
     public boolean createTable(String name) {
         if (containsTable(name)) return false;
-        tables.add(new Table(name, Paths.get(root.toString(), this.name)));
+        tables.add(new Table(Paths.get(root.toString(), name)));
         return true;
     }
 
@@ -60,18 +49,18 @@ public class Database {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Database database = (Database) o;
-        return name.equals(database.name);
+        return getName().equals(database.getName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(getName());
     }
 
     @Override
     public String toString() {
         return "Database{" +
-                "name='" + name + '\'' +
+                "name='" + getName() + '\'' +
                 ", tables=" + tables +
                 '}';
     }

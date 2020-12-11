@@ -1,3 +1,8 @@
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -6,9 +11,21 @@ import java.util.HashSet;
 
 public class FileManager {
 
-    public static boolean createDirectory(Path path) {
+    public static boolean getOrCreateDirectory(Path path) {
         try {
             Files.createDirectory(path);
+            return true;
+        } catch (FileAlreadyExistsException e) {
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean getOrCreateFile(Path path) {
+        try {
+            Files.createFile(path);
             return true;
         } catch (FileAlreadyExistsException e) {
             return false;
@@ -91,7 +108,28 @@ public class FileManager {
         }
     }
 
-    public static void main(String[] args) {
-
+    public static JSONObject readJson(Path path) {
+        try {
+            byte[] metadataBytes = Files.readAllBytes(path);
+            String metadataStr = new String(metadataBytes);
+            JSONParser parser = new JSONParser();
+            return (JSONObject) parser.parse(metadataStr);
+        } catch (ParseException | IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
+
+    public static boolean writeJson(Path path, JSONObject jsonObject) {
+        try {
+            byte[] metadataBytes = jsonObject.toString().getBytes();
+            Files.write(path, metadataBytes);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
 }

@@ -7,7 +7,7 @@ public class Connection {
 
     public Connection(Path root) {
         this.root = root;
-        FileManager.createDirectory(root);
+        FileManager.getOrCreateDirectory(root);
         databases = new HashSet<>();
         Objects.requireNonNull(FileManager.getSubDirectories(root))
             .forEach(dir -> databases.add(new Database(dir)));
@@ -30,7 +30,7 @@ public class Connection {
 
     public boolean createDatabase(String name) {
         if (containsDatabase(name)) return false;
-        databases.add(new Database(name, root));
+        databases.add(new Database(Paths.get(root.toString(), name)));
         return true;
     }
 

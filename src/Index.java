@@ -5,18 +5,11 @@ public class Index {
     private Column column;
     private Map<Record,List<Address>> entries;
 
-    public Index(String name, Column column) {
+    public Index(Path filePath, Column column) {
         this.column = column;
-        entries = new TreeMap<>();
-    }
-
-    public Index(Path indexFile, Column column) {
-        this.column = column;
-        fetchIndex(indexFile);
-    }
-
-    private void fetchIndex(Path indexFile) {
-        entries = new TreeMap<>();
+        FileManager.getOrCreateFile(filePath);
+        entries = new HashMap<>();
+        // CsvParser
 
     }
 
@@ -35,10 +28,9 @@ public class Index {
 
     public List<Address> getAddress(Record record) {
         List<Address> addresses = new ArrayList<>();
-        for (Record currentRecord : entries.keySet()) {
+        for (Record currentRecord : entries.keySet())
             if (currentRecord.equals(record))
                 addresses.addAll(entries.get(currentRecord));
-        }
         return addresses;
     }
 

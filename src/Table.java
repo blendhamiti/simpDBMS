@@ -1,12 +1,5 @@
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -14,113 +7,124 @@ import java.util.*;
 
 public class Table {
     private Path root;
-    private String name;
     private Collection<Column> columns;
-    private Collection<Index> indexes;
     private Column primaryKey;
     private int rowCount;
+    private Collection<Index> indexes;
 
-    public Table (String name, Path root) {
+    public Table (Path root) {
         this.root = root;
-        this.name = name;
-        try {
-            Files.createDirectory(Paths.get(root.toString(), name));
-        } catch (IOException e) {
-            System.out.println(e.toString());
-        }
+
+        // create dir if it doesnt exist
+        FileManager.getOrCreateDirectory(root);
+
+        // fetch columns, primaryKey, rowcount if metadata file exists
         columns = new HashSet<>();
+        JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
+        JSONArray jsonColumnsArray = (JSONArray) metadata.get("columns");
+        for (Object jsonObject : jsonColumnsArray) {
+            JSONObject jsonColumn = (JSONObject) jsonObject;
+            columns.add(new Column(jsonColumn.get("name").toString(), jsonColumn.get("type").toString()));
+        }
+        primaryKey = getColumn(metadata.get("primaryKey").toString());
+        rowCount = Integer.parseInt(metadata.get("rowCount").toString());
+
+        // fetch indexes if any
         indexes = new HashSet<>();
-        primaryKey = null;
-        rowCount = 0;
-    }
-
-    public Table (Path table) {
-        this.name = table.getFileName().toString();
-        fetchMetadata(table);
-        fetchIndexes(table);
-    }
-
-
-    private void fetchMetadata(Path table) {
-        columns = new ArrayList<>();
-        primaryKey = null;
-        rowCount = 0;
-        try {
-            byte[] metadataBytes = Files.readAllBytes(
-                    Files.list(table)
-                        .filter(file -> file.getFileName().toString().equals("metadata.json"))
-                        .findAny()
-                        .get());
-            String metadataStr = new String(metadataBytes);
-
-            JSONParser parser = new JSONParser();
-            try {
-                JSONObject jsonMetadata = (JSONObject) parser.parse(metadataStr);
-                // fetch columns
-                JSONArray jsonColumnsArray = (JSONArray) jsonMetadata.get("columns");
-                for (Object jsonObject : jsonColumnsArray) {
-                    JSONObject jsonColumn = (JSONObject) jsonObject;
-                    columns.add(new Column(jsonColumn.get("name").toString(), jsonColumn.get("type").toString()));
-                }
-                // fetch primary key
-                primaryKey = getColumn(jsonMetadata.get("primaryKey").toString());
-                // fetch row count
-                rowCount = Integer.parseInt(jsonMetadata.get("rowCount").toString());
-            } catch (ParseException e) {
-                System.out.println(e.toString());
-            }
-        } catch (IOException e) {
-            System.out.println(e.toString());
-        }
-    }
-
-    private void fetchIndexes(Path table) {
-        indexes = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(table)) {
-            for (Path file : stream) {
-                if (file.getFileName().toString().startsWith("index")) {
-                    indexes.add(new Index(file, getColumn(file.getFileName().toString().split("_")[1])));
-                }
-            }
-        } catch (IOException e) {
-            System.out.println(e.toString());
-        }
+        Objects.requireNonNull(FileManager.getSubDirectories(root))
+                .stream()
+                .filter(file -> file.getFileName().toString().startsWith("index"))
+                .forEach(file -> indexes.add(new Index(file, getColumn(file.getFileName()
+                        .toString().split("_")[1].split("\\.")[0]))));
     }
 
     public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+        return root.getFileName().toString();
     }
 
     public Column getPrimaryKey() {
         return primaryKey;
     }
 
+    // TODO: THINK OF COLUMN UNIQUENESS
     public void setPrimaryKey(Column primaryKey) {
-        this.primaryKey = primaryKey;
     }
 
     public int getRowCount() {
         return rowCount;
     }
 
+    public void setRowCount(int rowCount) {
+        JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
+        metadata.put("rowCount", rowCount);
+        FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
+        this.rowCount = rowCount;
+    }
+
     public void rowCountIncrement() {
-        rowCount++;
+        setRowCount(++rowCount);
     }
 
     public void rowCountIncrement(int increment) {
-        rowCount += increment;
+        setRowCount(rowCount + increment);
     }
 
     public void rowCountDecrement() {
-        rowCount--;
+        setRowCount(--rowCount);
     }
 
     public void rowCountDecrement(int decrement) {
-        rowCount -= decrement;
+        setRowCount(rowCount - decrement);
+    }
+
+    public Collection<Column> getColumns() {
+        return columns;
+    }
+
+    public Column getColumn(String name) {
+        for (Column column : columns)
+            if (column.getName().equals(name))
+                return column;
+        return null;
+    }
+
+    public boolean containsColumn(String name) {
+        return getColumn(name) != null;
+    }
+
+    public boolean createColumn(String name, Type type) {
+        if (containsColumn(name)) return false;
+        // update metadata file
+        JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
+        JSONArray jsonColumnsArray = (JSONArray) metadata.get("columns");
+        JSONObject column = new JSONObject();
+        column.put("name", name);
+        column.put("type", type.name());
+        jsonColumnsArray.add(column);
+        metadata.put("columns", jsonColumnsArray);
+        FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
+        // add to collection
+        columns.add(new Column(name, type));
+        return true;
+    }
+
+    public boolean removeColumn(String name) {
+        if (!containsColumn(name)) return false;
+        // update metadata file
+        JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
+        JSONArray jsonColumnsArray = (JSONArray) metadata.get("columns");
+        JSONObject column = null;
+        for (Object jsonObject : jsonColumnsArray) {
+            JSONObject jsonColumn = (JSONObject) jsonObject;
+            if (jsonColumn.get("name").equals(name))
+                column = jsonColumn;
+        }
+        jsonColumnsArray.remove(column);
+        metadata.put("columns", jsonColumnsArray);
+        FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
+        // remove from collection
+        columns.remove(getColumn(name));
+        return true;
     }
 
     public Collection<Index> getIndexes() {
@@ -134,32 +138,21 @@ public class Table {
         return null;
     }
 
-    public void addIndex(Index index) {
-        indexes.add(index);
+    public boolean containsIndex(Column column) {
+        return getIndex(column) != null;
     }
 
-    public void removeIndex(Index index) {
-        indexes.remove(index);
+    public boolean createIndex(Column column) {
+        if (containsIndex(column)) return false;
+        indexes.add(new Index(Paths.get(root.toString(), "index_" + column.getName() + ".csv"), column));
+        return true;
     }
 
-    public Collection<Column> getColumns() {
-        return columns;
-    }
-
-    public Column getColumn(String name) {
-        for (Column column : columns) {
-            if (column.getName().equals(name))
-                return column;
-        }
-        return null;
-    }
-
-    public void addColumn(Column column) {
-        columns.add(column);
-    }
-
-    public void removeColumn(Column column) {
-        columns.remove(column);
+    public boolean removeIndex(Column column) {
+        if (!containsIndex(column)) return false;
+        FileManager.deleteDirectory(Paths.get(root.toString(), "index_" + column.getName() + ".csv"));
+        indexes.remove(getIndex(column));
+        return true;
     }
 
     public List<Row> getRows() {
@@ -184,18 +177,18 @@ public class Table {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Table table = (Table) o;
-        return name.equals(table.name);
+        return getName().equals(table.getName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(getName());
     }
 
     @Override
     public String toString() {
         return "Table{" +
-                "name='" + name + '\'' +
+                "name='" + getName() + '\'' +
                 ", columns=" + columns +
                 ", indexes=" + indexes +
                 ", primaryKey=" + primaryKey +
