@@ -1,30 +1,16 @@
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 
 public class Connection {
-    private Path root;
-    private Collection<Database> databases;
+    private final Path root;
+    private final Collection<Database> databases;
 
     public Connection(Path root) {
         this.root = root;
-        try {
-            Files.createDirectory(root);
-        } catch (IOException e) {
-            System.out.println(e.toString());
-        }
-        fetchDatabases();
-    }
-
-    private void fetchDatabases() {
+        FileManager.createDirectory(root);
         databases = new HashSet<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(root)) {
-            for (Path database : stream)
-                databases.add(new Database(database));
-        } catch (IOException e) {
-            System.out.println(e.toString());
-        }
+        Objects.requireNonNull(FileManager.getSubDirectories(root))
+            .forEach(dir -> databases.add(new Database(dir)));
     }
 
     public Collection<Database> getDatabases() {
@@ -32,10 +18,9 @@ public class Connection {
     }
 
     public Database getDatabase(String name) {
-        for (Database database : databases) {
+        for (Database database : databases)
             if (database.getName().equals(name))
                 return database;
-        }
         return null;
     }
 
@@ -45,26 +30,13 @@ public class Connection {
 
     public boolean createDatabase(String name) {
         if (containsDatabase(name)) return false;
-        Database database = new Database(name, root);
-        databases.add(database);
+        databases.add(new Database(name, root));
         return true;
     }
 
     public boolean removeDatabase(String name) {
         if (!containsDatabase(name)) return false;
-        try {
-            Files.walk(Paths.get(root.toString(), name))
-                    .map(Path::toFile)
-                    .sorted(Comparator.reverseOrder())
-                    .forEachOrdered(File::delete);
-        } catch (IOException e) {
-            System.out.println(e.toString());
-        }
-        if (!Files.exists(Paths.get(root.toString(), name))) {
-            databases.remove(getDatabase(name));
-            return true;
-        }
-        return false;
+        return FileManager.deleteDirectory(Paths.get(root.toString(), name), true);
     }
 
     @Override
@@ -89,32 +61,6 @@ public class Connection {
     }
 
     public static void main(String[] args) {
-        // list directory contents
-//        Path path = FileSystems.getDefault().getPath("data", "company");
-//        System.out.println(Files.exists(path));
-//        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-//            for (Path file : stream) {
-//                System.out.println(file.getFileName());
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-//        Path path2 = FileSystems.getDefault().getPath("data");
-//        try {
-//            Files.createDirectory(path2);
-//        } catch (FileAlreadyExistsException e) {
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-//        try {
-//            Files.walk(Paths.get(path.getFileName().toString()))
-//                .forEach(System.out::println);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
 
         Path path = FileSystems.getDefault().getPath("data");
         Connection connection = new Connection(path);

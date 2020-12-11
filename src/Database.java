@@ -11,38 +11,22 @@ public class Database {
     private Collection<Table> tables;
 
     public Database(String name, Path root) {
-        this.root = root;
         this.name = name;
-        try {
-            Files.createDirectory(Paths.get(root.getFileName().toString(), name));
-        } catch (IOException e) {
-            System.out.println(e.toString());
-        }
+        this.root = Paths.get(root.toString(), name);
+        FileManager.createDirectory(root);
         tables = new HashSet<>();
     }
 
     public Database(Path database) {
+        root = database;
         name = database.getFileName().toString();
-        fetchTables(database);
-    }
-
-    private void fetchTables(Path database) {
         tables = new HashSet<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(database)) {
-            for (Path table : stream)
-                tables.add(new Table(table));
-        } catch (IOException e) {
-            System.out.println(e.toString());
-        }
+        Objects.requireNonNull(FileManager.getSubDirectories(root))
+                .forEach(dir -> tables.add(new Table(dir)));
     }
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-
-        this.name = name;
     }
 
     public Collection<Table> getTables() {
@@ -50,10 +34,9 @@ public class Database {
     }
 
     public Table getTable(String name) {
-        for (Table table : tables) {
+        for (Table table : tables)
             if (table.getName().equals(name))
                 return table;
-        }
         return null;
     }
 
@@ -63,13 +46,13 @@ public class Database {
 
     public boolean createTable(String name) {
         if (containsTable(name)) return false;
-        Table table = new Table(name, Paths.get(root.toString(), this.name));
-        tables.add(table);
+        tables.add(new Table(name, Paths.get(root.toString(), this.name)));
         return true;
     }
 
-    public boolean removeTable(Table table) {
-        return tables.remove(table);
+    public boolean removeTable(String name) {
+        if (!containsTable(name)) return false;
+        return FileManager.deleteDirectory(Paths.get(root.toString(), name), true);
     }
 
     @Override
