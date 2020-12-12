@@ -1,16 +1,14 @@
+import org.apache.commons.csv.CSVParser;
+
 import java.nio.file.Path;
 import java.util.*;
 
 public class Index {
     private Column column;
-    private Map<Record,List<Address>> entries;
 
     public Index(Path filePath, Column column) {
         this.column = column;
         FileManager.getOrCreateFile(filePath);
-        entries = new HashMap<>();
-        // CsvParser
-
     }
 
     public Column getColumn() {
@@ -27,6 +25,11 @@ public class Index {
     }
 
     public List<Address> getAddress(Record record) {
+        // parse entries
+        Map<Record,List<Address>> entries = new HashMap<>();
+
+
+        // return address
         List<Address> addresses = new ArrayList<>();
         for (Record currentRecord : entries.keySet())
             if (currentRecord.equals(record))
@@ -39,20 +42,18 @@ public class Index {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Index index = (Index) o;
-        return column.equals(index.column) &&
-                Objects.equals(entries, index.entries);
+        return column.equals(index.column);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(column, entries);
+        return Objects.hash(column);
     }
 
     @Override
     public String toString() {
         return "Index{" +
                 "column=" + column +
-                ", entries=" + entries +
                 '}';
     }
 }

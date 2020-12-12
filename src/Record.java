@@ -1,12 +1,10 @@
-import java.rmi.UnexpectedException;
-import java.util.InputMismatchException;
 import java.util.Objects;
 
 public class Record implements Comparable<Record> {
-    private Object value;
+    private String value;
     private Type type;
 
-    public Record(Object value, Type type) {
+    public Record(String value, Type type) {
         this.value = value;
         this.type = type;
     }
@@ -15,7 +13,8 @@ public class Record implements Comparable<Record> {
         return value;
     }
 
-    public void setValue(Object value) {
+    // TODO: integer or string check ?!
+    public void setValue(String value) {
         this.value = value;
     }
 
@@ -28,12 +27,13 @@ public class Record implements Comparable<Record> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Record record = (Record) o;
-        return value.equals(record.value);
+        return value.equals(record.value) &&
+                type == record.type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+        return Objects.hash(value, type);
     }
 
     @Override
@@ -43,16 +43,8 @@ public class Record implements Comparable<Record> {
 
     @Override
     public int compareTo(Record o) {
-        if      (type == Type.STRING && o.type == Type.STRING) {
-            String thisValue = (String) value;
-            String thatValue = (String) o.value;
-            return thisValue.compareTo(thatValue);
-        }
-        else if (type == Type.INTEGER && o.type == Type.INTEGER) {
-            Integer thisValue = (Integer) value;
-            Integer thatValue = (Integer) o.value;
-            return thisValue.compareTo(thatValue);
-        }
-        throw new InputMismatchException();
+        if (type == Type.INTEGER && o.type == Type.INTEGER)
+            return Integer.valueOf(value).compareTo(Integer.valueOf(o.value));
+        return value.compareTo(o.value);
     }
 }

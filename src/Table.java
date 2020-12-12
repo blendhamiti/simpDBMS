@@ -1,3 +1,5 @@
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import java.nio.file.Path;
@@ -156,7 +158,11 @@ public class Table {
     }
 
     public List<Row> getRows() {
-        return null;
+        List<Row> rows = new ArrayList<>();
+        CSVParser parser = CsvManager.parse(Paths.get(root.toString(), getName() + ".csv"));
+        for (CSVRecord csvRecord : parser)
+            rows.add(new Row(csvRecord, columns));
+        return rows;
     }
 
     public Row getRow(Column column, Record record, Filter filter) {
