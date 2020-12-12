@@ -21,7 +21,7 @@ public class Table {
         FileManager.getOrCreateDirectory(root);
 
         // fetch columns, primaryKey, rowcount if metadata file exists
-        columns = new HashSet<>();
+        columns = new LinkedHashSet<>();
         JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
         JSONArray jsonColumnsArray = (JSONArray) metadata.get("columns");
         for (Object jsonObject : jsonColumnsArray) {
@@ -49,7 +49,8 @@ public class Table {
     }
 
     // TODO: THINK OF COLUMN UNIQUENESS
-    public void setPrimaryKey(Column primaryKey) {
+    public void setPrimaryKey(Column column) {
+
     }
 
     public int getRowCount() {
@@ -160,8 +161,20 @@ public class Table {
     public List<Row> getRows() {
         List<Row> rows = new ArrayList<>();
         CSVParser parser = CsvManager.parse(Paths.get(root.toString(), getName() + ".csv"));
-        for (CSVRecord csvRecord : parser)
-            rows.add(new Row(csvRecord, columns));
+        CSVRecord header = null;
+        List<Record> records;
+        for (CSVRecord csvRecord : parser) {
+            // set first record as header
+            if (header == null) {
+                header = csvRecord;
+                continue;
+            }
+            // fetch records into rows
+            records = new ArrayList<>();
+            for (int i = 0; i < csvRecord.size(); i++)
+                records.add(new Record(csvRecord.get(i), getColumn(header.get(i)).getType()));
+            rows.add(new Row(records));
+        }
         return rows;
     }
 

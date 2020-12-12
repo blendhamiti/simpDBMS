@@ -13,7 +13,6 @@ public class Record implements Comparable<Record> {
         return value;
     }
 
-    // TODO: integer or string check ?!
     public void setValue(String value) {
         this.value = value;
     }

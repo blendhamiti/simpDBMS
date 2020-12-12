@@ -9,26 +9,17 @@ public class Row {
         this.records = records;
     }
 
-    public Row(CSVRecord csvRecord, Collection<Column> columns) {
-        records = new ArrayList<>();
-        Iterator<String> csvRecordIterator = csvRecord.iterator();
-        Iterator<Column> columnIterator = columns.iterator();
-        while (csvRecordIterator.hasNext() && columnIterator.hasNext()) {
-            records.add(new Record(csvRecordIterator.next(), columnIterator.next().getType()));
-        }
-        System.out.println(records);
-    }
-
-
     public List<Record> getRecords() {
         return records;
     }
     
     public Record getRecord(Column column) {
         return null;
+
     }
 
     public void addRecord(Column column, Record record) {
+
     }
 
     public void updateRecord(Column column, Record record) {

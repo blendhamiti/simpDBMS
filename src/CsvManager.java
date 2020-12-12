@@ -7,6 +7,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class CsvManager {
 
@@ -35,11 +36,17 @@ public class CsvManager {
         Paths.get("data","company", "employees", "index_id.csv");
         Connection conn = new Connection(Paths.get("data"));
         System.out.println(conn.toString());
+        System.out.println(conn.getDatabase("company").getTable("employees").getRows());
 
-        CSVParser parser = CsvManager.parse(Paths.get("data","blends", "employees", "index_id.csv"));
-        for (CSVRecord csvRecord : parser) {
-            new Row(csvRecord, conn.getDatabase("company").getTable("employees").getColumns());
-        }
+        // CSVParser parser = CsvManager.parse(Paths.get("data","company", "employees", "employees.csv"));
+        // CSVRecord header = null;
+        // for (CSVRecord csvRecord : parser) {
+        //     if (header == null) {
+        //         header = csvRecord;
+        //         continue;
+        //     }
+        //     System.out.println(csvRecord);
+        // }
 
     }
 }
