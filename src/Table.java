@@ -5,6 +5,8 @@ import org.json.simple.JSONObject;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 
 public class Table {
@@ -21,7 +23,7 @@ public class Table {
         FileManager.getOrCreateDirectory(root);
 
         // fetch columns, primaryKey, rowcount if metadata file exists
-        columns = new LinkedHashSet<>();
+        columns = new HashSet<>();
         JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
         JSONArray jsonColumnsArray = (JSONArray) metadata.get("columns");
         for (Object jsonObject : jsonColumnsArray) {
@@ -147,7 +149,7 @@ public class Table {
 
     public boolean createIndex(Column column) {
         if (containsIndex(column)) return false;
-        indexes.add(new Index(Paths.get(root.toString(), "index_" + column.getName() + ".csv"), column));
+        indexes.add(new Index(Paths.get(root.toString(), "index_" + column.getName() + ".csv"), column, getRows(column)));
         return true;
     }
 
@@ -160,25 +162,42 @@ public class Table {
 
     public List<Row> getRows() {
         List<Row> rows = new ArrayList<>();
-        CSVParser parser = CsvManager.parse(Paths.get(root.toString(), getName() + ".csv"));
-        CSVRecord header = null;
-        List<Record> records;
+        CSVParser parser = FileManager.readCsv(
+                Paths.get(root.toString(), getName() + ".csv"),
+                Arrays.toString(columns.stream().map(Column::getName).toArray(String[]::new)));
+       List<Record> records;
         for (CSVRecord csvRecord : parser) {
-            // set first record as header
-            if (header == null) {
-                header = csvRecord;
-                continue;
-            }
-            // fetch records into rows
             records = new ArrayList<>();
             for (int i = 0; i < csvRecord.size(); i++)
-                records.add(new Record(csvRecord.get(i), getColumn(header.get(i)).getType()));
+                records.add(new Record(csvRecord.get(i), getColumn(parser.getHeaderNames().get(i)).getType()));
             rows.add(new Row(records));
         }
         return rows;
     }
 
+    public List<Record> getRows(Column column) {
+        CSVParser parser = FileManager.readCsv(
+                Paths.get(root.toString(), getName() + ".csv"),
+                Arrays.toString(columns.stream().map(Column::getName).toArray(String[]::new)));
+        List<Record> records = new ArrayList<>();
+        for (CSVRecord csvRecord : parser)
+            records.add(new Record(csvRecord.get(column.getName()), column.getType()));
+        return records;
+    }
+
     public Row getRow(Column column, Record record, Filter filter) {
+        if (record.getValue().isBlank()) return null;
+        CSVParser parser = FileManager.readCsv(
+                Paths.get(root.toString(), getName() + ".csv"),
+                Arrays.toString(columns.stream().map(Column::getName).toArray(String[]::new)));
+        // check if index query is available
+        if (containsIndex(column)) {
+            //index query
+
+        } else {
+            // non-index query
+
+        }
         return null;
     }
 

@@ -1,13 +1,19 @@
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 public class FileManager {
 
@@ -90,7 +96,7 @@ public class FileManager {
             return true;
         } catch (DirectoryNotEmptyException e) {
             return false;
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
@@ -131,5 +137,24 @@ public class FileManager {
         }
     }
 
+    public static CSVParser readCsv(Path path, String... columns) {
+        try {
+            Reader in = Files.newBufferedReader(path);
+            return new CSVParser(in, CSVFormat.DEFAULT.withHeader(columns));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
+    public static CSVPrinter writeCsv(Path path, String... columns) {
+        try {
+            Writer out = Files.newBufferedWriter(path);
+            return new CSVPrinter(out, CSVFormat.DEFAULT.withHeader(columns));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
+

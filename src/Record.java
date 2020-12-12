@@ -9,12 +9,16 @@ public class Record implements Comparable<Record> {
         this.type = type;
     }
 
-    public Object getValue() {
+    public String getValue() {
         return value;
     }
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public boolean isBlank() {
+        return value.isBlank();
     }
 
     public Type getType() {

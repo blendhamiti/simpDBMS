@@ -1,13 +1,13 @@
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.CSVRecord;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.*;
 
 public class User {
 
@@ -16,9 +16,22 @@ public class User {
         Connection conn = new Connection(path);
         System.out.println(conn);
 
+        Path path2 = Paths.get("data","blends", "employees", "index_id.csv");
 
-        Paths.get("data","company", "employees", "index_id.csv");
-        // FileManager.getOrCreateFile(Paths.get("data","blends", "employees", "index_ids.csv"));
+        try {
+            CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(path2, StandardOpenOption.APPEND), CSVFormat.DEFAULT.withHeader("id", "address"));
+            printer.printRecord("asd", "asdasd");
+            printer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // try {
+        //     CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(filePath, StandardOpenOption.APPEND), CSVFormat.DEFAULT);
+        //     printer.printRecord(column.getType() == Type.INTEGER ? Integer.valueOf(record.getValue()) : record.getValue(), address.getLine());
+        // } catch (IOException e) {
+        //     e.printStackTrace();
+        // }
 
 
     }
