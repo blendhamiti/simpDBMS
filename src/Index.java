@@ -57,6 +57,10 @@ public class Index {
         return column;
     }
 
+    public Map<Record, List<Address>> getEntries() {
+        return entries;
+    }
+
     public void addEntry(Record record, Address address) {
         if (record.getType() != column.getType())
             throw new IllegalArgumentException();

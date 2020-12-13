@@ -204,19 +204,92 @@ public class Table {
         return records;
     }
 
-    public Row getRow(Column column, Record record, Filter filter) {
+    public List<Row> getRow(Column column, Record record, Filter filter) {
+        // check fi record in query is blank
         if (record.getValue().isBlank()) return null;
-        CSVParser parser = FileManager.readCsv(
-                Paths.get(root.toString(), getFileName()),
-                Arrays.toString(columns.stream().map(Column::getName).toArray(String[]::new)));
-        // check if index query is available
-        if (containsIndex(column)) {
-            //index query
 
+        // prepare list for rows that match
+        List<Row> rows = new ArrayList<>();
+
+        switch (filter) {
+
+            case EQUAL_TO:
+                if (containsIndex(column)) {
+                    List<Address> addresses = new ArrayList<>();
+                    addresses.addAll(getIndex(column).getAddress(record));
+                    List<Row> allRows = getRows();
+                    for (Address address : addresses)
+                        rows.add(allRows.get(address.getLine()));
+                }
+                else {
+                    for (Row currentRow : getRows())
+                        if (currentRow.getRecord(column).equals(record))
+                            rows.add(currentRow);
+                }
+
+            case NOT_EQUAL_TO:
+                if (containsIndex(column)) {
+                    List<Address> addresses = new ArrayList<>();
+                    getIndex(column).getEntries().keySet()
+                            .stream()
+                            .filter(rec -> !rec.equals(record))
+                            .forEach(rec -> addresses.addAll(getIndex(column).getAddress(rec)));
+                    List<Row> allRows = getRows();
+                    for (Address address : addresses)
+                        rows.add(allRows.get(address.getLine()));
+                }
+                else {
+                    for (Row currentRow : getRows())
+                        if (!currentRow.getRecord(column).equals(record))
+                            rows.add(currentRow);
+                }
+
+            case LARGER_THAN:
+                if (containsIndex(column)) {
+                    List<Address> addresses = new ArrayList<>();
+                    getIndex(column).getEntries().keySet()
+                            .stream()
+                            .filter(rec -> rec.compareTo(record) > 0)
+                            .forEach(rec -> addresses.addAll(getIndex(column).getAddress(rec)));
+                    List<Row> allRows = getRows();
+                    for (Address address : addresses)
+                        rows.add(allRows.get(address.getLine()));
+                }
+                else {
+                    for (Row currentRow : getRows())
+                        if (currentRow.getRecord(column).compareTo(record) > 0)
+                            rows.add(currentRow);
+                }
+
+            case LARGER_THAN_OR_EQUAL_TO:
+                rows.addAll(getRow(column, record, Filter.LARGER_THAN));
+                rows.addAll(getRow(column, record, Filter.EQUAL_TO));
+
+            case SMALLER_THAN:
+                if (containsIndex(column)) {
+                    List<Address> addresses = new ArrayList<>();
+                    getIndex(column).getEntries().keySet()
+                            .stream()
+                            .filter(rec -> rec.compareTo(record) < 0)
+                            .forEach(rec -> addresses.addAll(getIndex(column).getAddress(rec)));
+                    List<Row> allRows = getRows();
+                    for (Address address : addresses)
+                        rows.add(allRows.get(address.getLine()));
+                }
+                else {
+                    for (Row currentRow : getRows())
+                        if (currentRow.getRecord(column).compareTo(record) < 0)
+                            rows.add(currentRow);
+                }
+
+            case SMALLER_THAN_OR_EQUAL_TO:
+                rows.addAll(getRow(column, record, Filter.SMALLER_THAN));
+                rows.addAll(getRow(column, record, Filter.EQUAL_TO));
+
+            default:
+                rows.addAll(getRow(column, record, Filter.EQUAL_TO));
         }
-        // non-index query
-
-        return null;
+        return rows;
     }
 
     public boolean containsRow(Row row) {
