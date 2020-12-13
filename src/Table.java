@@ -23,7 +23,7 @@ public class Table {
         FileManager.getOrCreateDirectory(root);
 
         // fetch columns, primaryKey, rowcount if metadata file exists
-        columns = new HashSet<>();
+        columns = new LinkedHashSet<>();
         JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
         JSONArray jsonColumnsArray = (JSONArray) metadata.get("columns");
         for (Object jsonObject : jsonColumnsArray) {
@@ -34,7 +34,7 @@ public class Table {
         rowCount = Integer.parseInt(metadata.get("rowCount").toString());
 
         // fetch indexes if any
-        indexes = new HashSet<>();
+        indexes = new LinkedHashSet<>();
         Objects.requireNonNull(FileManager.getSubDirectories(root))
                 .stream()
                 .filter(file -> file.getFileName().toString().startsWith("index"))
@@ -165,12 +165,12 @@ public class Table {
         CSVParser parser = FileManager.readCsv(
                 Paths.get(root.toString(), getName() + ".csv"),
                 Arrays.toString(columns.stream().map(Column::getName).toArray(String[]::new)));
-       List<Record> records;
+        List<Record> records;
         for (CSVRecord csvRecord : parser) {
             records = new ArrayList<>();
             for (int i = 0; i < csvRecord.size(); i++)
                 records.add(new Record(csvRecord.get(i), getColumn(parser.getHeaderNames().get(i)).getType()));
-            rows.add(new Row(records));
+            rows.add(new Row(records, columns));
         }
         return rows;
     }
@@ -194,10 +194,9 @@ public class Table {
         if (containsIndex(column)) {
             //index query
 
-        } else {
-            // non-index query
-
         }
+        // non-index query
+
         return null;
     }
 
@@ -208,6 +207,7 @@ public class Table {
     }
 
     public void removeRow(Row row) {
+
     }
 
     @Override

@@ -22,7 +22,7 @@ public class Index {
         CSVParser parser = FileManager.readCsv(filePath, column.getName(), "address");
         for (CSVRecord csvRecord : parser) {
             Record record = new Record(csvRecord.get(column.getName()), column.getType());
-            Address address = new Address(Integer.parseInt(csvRecord.get("address")));
+            Address address = new Address(Integer.valueOf(csvRecord.get("address")));
             addEntry(record, address);
         }
     }
