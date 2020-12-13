@@ -1,12 +1,7 @@
-import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.file.*;
 import java.util.*;
 

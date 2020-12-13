@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-
 public class Table {
     private final Path root;
     private final Collection<Column> columns;
