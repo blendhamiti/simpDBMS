@@ -4,10 +4,12 @@ import java.util.*;
 
 public class Row {
     private List<Record> records;
-    private Collection<Column> columns;
+    private final Collection<Column> columns;
+    private final Column primaryKey;
 
-    public Row(List<Record> records, Collection<Column> columns) {
+    public Row(List<Record> records, Collection<Column> columns, Column primaryKey) {
         this.columns = columns;
+        this.primaryKey = primaryKey;
         this.records = new ArrayList<>();
         Iterator<Record> recordIterator = records.iterator();
         Iterator<Column> columnIterator = columns.iterator();
@@ -53,12 +55,16 @@ public class Row {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Row row = (Row) o;
-        return records.equals(row.records);
+        if (primaryKey == null)
+            return records.equals(row.records);
+        return getRecord(primaryKey).equals(row.getRecord(primaryKey));
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(records);
+        if (primaryKey == null)
+            return Objects.hash(records);
+        return Objects.hash(getRecord(primaryKey));
     }
 
     @Override

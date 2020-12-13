@@ -1,20 +1,20 @@
 import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 
 
 public class Table {
-    private Path root;
-    private Collection<Column> columns;
+    private final Path root;
+    private final Collection<Column> columns;
     private Column primaryKey;
     private int rowCount;
-    private Collection<Index> indexes;
+    private final Collection<Index> indexes;
 
     public Table (Path root) {
         this.root = root;
@@ -22,8 +22,12 @@ public class Table {
         // create dir if it doesnt exist
         FileManager.getOrCreateDirectory(root);
 
+        // create table file if it doesnt exist
+        FileManager.getOrCreateFile(Paths.get(root.toString(), getFileName()));
+
         // fetch columns, primaryKey, rowcount if metadata file exists
         columns = new LinkedHashSet<>();
+        FileManager.getOrCreateFile(Paths.get(root.toString(), "metadata.json"));
         JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
         JSONArray jsonColumnsArray = (JSONArray) metadata.get("columns");
         for (Object jsonObject : jsonColumnsArray) {
@@ -46,6 +50,10 @@ public class Table {
         return root.getFileName().toString();
     }
 
+    public String getFileName() {
+        return getName() + ".csv";
+    }
+
     public Column getPrimaryKey() {
         return primaryKey;
     }
@@ -57,6 +65,7 @@ public class Table {
             if (record.isBlank()) return false;
             if (!recordSet.add(record)) return false;
         }
+        primaryKey = column;
         // update metadata file
         JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
         metadata.put("primaryKey", column.getName());
@@ -68,27 +77,28 @@ public class Table {
         return rowCount;
     }
 
-    public void setRowCount(int rowCount) {
+    public int setRowCount(int rowCount) {
         JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
         metadata.put("rowCount", rowCount);
         FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
         this.rowCount = rowCount;
+        return rowCount;
     }
 
-    public void rowCountIncrement() {
-        setRowCount(++rowCount);
+    public int rowCountIncrement() {
+        return setRowCount(++rowCount);
     }
 
-    public void rowCountIncrement(int increment) {
-        setRowCount(rowCount + increment);
+    public int rowCountIncrement(int increment) {
+        return setRowCount(rowCount + increment);
     }
 
-    public void rowCountDecrement() {
-        setRowCount(--rowCount);
+    public int rowCountDecrement() {
+        return setRowCount(--rowCount);
     }
 
-    public void rowCountDecrement(int decrement) {
-        setRowCount(rowCount - decrement);
+    public int rowCountDecrement(int decrement) {
+        return setRowCount(rowCount - decrement);
     }
 
     public Collection<Column> getColumns() {
@@ -179,7 +189,7 @@ public class Table {
             records = new ArrayList<>();
             for (int i = 0; i < csvRecord.size(); i++)
                 records.add(new Record(csvRecord.get(i), getColumn(parser.getHeaderNames().get(i)).getType()));
-            rows.add(new Row(records, columns));
+            rows.add(new Row(records, columns, primaryKey));
         }
         return rows;
     }
@@ -197,7 +207,7 @@ public class Table {
     public Row getRow(Column column, Record record, Filter filter) {
         if (record.getValue().isBlank()) return null;
         CSVParser parser = FileManager.readCsv(
-                Paths.get(root.toString(), getName() + ".csv"),
+                Paths.get(root.toString(), getFileName()),
                 Arrays.toString(columns.stream().map(Column::getName).toArray(String[]::new)));
         // check if index query is available
         if (containsIndex(column)) {
@@ -209,14 +219,58 @@ public class Table {
         return null;
     }
 
-    public void addRow(List<Record> records) {
+    public boolean containsRow(Row row) {
+        if (primaryKey == null) return false;
+        if (row.getRecord(primaryKey).isBlank()) return true;
+        return getRow(primaryKey, row.getRecord(primaryKey), Filter.EQUAL_TO) != null;
     }
 
-    public void updateRow(Row row, List<Record> records) {
+    public boolean addRow(List<Record> records) {
+        Row row = new Row(records, columns, primaryKey);
+        if (containsRow(row) || row.getRecord(primaryKey).isBlank()) return false;
+        try {
+            CSVPrinter printer = FileManager.appendCsv(Paths.get(root.toString(), getFileName()));
+            for (Record record : records)
+                printer.print(record);
+            printer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        for (Index index : indexes)
+            index.addEntry(row.getRecord(index.getColumn()), new Address(rowCountIncrement()));
+        return true;
     }
 
-    public void removeRow(Row row) {
+    public boolean updateRow(Row row, List<Record> records) {
+        return removeRow(row) && addRow(records);
+    }
 
+    public boolean removeRow(Row row) {
+        if (!containsRow(row)) return false;
+        List<Row> rows = getRows();
+        int lineNumber = 0;
+        boolean isRemoved = false;
+        if (getPrimaryKey() != null && containsIndex(primaryKey)) {
+            // use index to find lineNumber
+            rows.removeIf(currentRow -> currentRow.equals(row));
+            lineNumber = getIndex(primaryKey).getAddress(row.getRecord(primaryKey)).get(0).getLine();
+            isRemoved = true;
+        }
+        else {
+            // iterate through file to find lineNumber
+            for (Row currentRow : rows) {
+                lineNumber++;
+                if (currentRow.equals(row)) {
+                    rows.remove(currentRow);
+                    isRemoved = true;
+                    break;
+                }
+            }
+        }
+        if (!isRemoved) return false;
+        for (Index index : indexes)
+            index.removeEntry(row.getRecord(index.getColumn()), new Address(lineNumber));
+        return true;
     }
 
     @Override

@@ -156,5 +156,15 @@ public class FileManager {
             return null;
         }
     }
+
+    public static CSVPrinter appendCsv(Path path, String... columns) {
+        try {
+            Writer out = Files.newBufferedWriter(path, StandardOpenOption.APPEND);
+            return new CSVPrinter(out, CSVFormat.DEFAULT.withHeader(columns));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
 
