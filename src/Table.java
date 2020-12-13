@@ -50,9 +50,18 @@ public class Table {
         return primaryKey;
     }
 
-    // TODO: THINK OF COLUMN UNIQUENESS
-    public void setPrimaryKey(Column column) {
-
+    public boolean setPrimaryKey(Column column) {
+        // check that column does not have null or duplicate entries
+        Set<Record> recordSet = new HashSet<>();
+        for (Record record : getRows(column)) {
+            if (record.isBlank()) return false;
+            if (!recordSet.add(record)) return false;
+        }
+        // update metadata file
+        JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
+        metadata.put("primaryKey", column.getName());
+        FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
+        return true;
     }
 
     public int getRowCount() {
