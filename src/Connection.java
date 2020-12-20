@@ -13,6 +13,12 @@ public class Connection {
             .forEach(dir -> databases.add(new Database(dir)));
     }
 
+    public void close() {
+        databases.forEach(database -> database.getTables()
+                        .forEach(table -> table.getIndexes()
+                                .forEach(index -> index.printIndexToFile())));
+    }
+
     public Collection<Database> getDatabases() {
         return databases;
     }
