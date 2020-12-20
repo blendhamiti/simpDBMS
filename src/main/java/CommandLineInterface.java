@@ -5,9 +5,12 @@ public class CommandLineInterface {
     private static String USER_INPUT_SIGN = "user > ";
     private static String TERMINATING_MESSAGE = "Exiting...";
     private static String HELP_GENERAL =
-            "dasd" +
-            "aasd" +
-            "asd" +
+            "Command: SHOW [DATABASE] [TABLE]\n" +
+            "\tDescription:\n" +
+            "\t\tdisplays all databases\n" +
+            "\tArguments:\n" +
+            "\t\tDATABASE   => use 'database name' to display that database's tables\n" +
+            "\t\tTABLE      => use 'table name' to display that table's columns, indexes, primary key and row count\n" +
             "asd" +
             "asd" +
             "";
@@ -44,14 +47,11 @@ public class CommandLineInterface {
                 case "show":
                     switch (arguments.length) {
                         case 1:
-                            System.out.println(ERROR_NOT_ENOUGH_ARGS);
+                            System.out.println(connection.getDatabases());
                             break;
 
                         case 2:
-                            if      (arguments[1].equals("all")) {
-                                System.out.println(connection.getDatabases());
-                            }
-                            else if (connection.containsDatabase(arguments[1])) {
+                            if (connection.containsDatabase(arguments[1])) {
                                 System.out.println(connection.getDatabase(arguments[1]).getTables());
                             }
                             else {
