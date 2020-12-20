@@ -10,10 +10,7 @@ public class CommandLineInterface {
             "\t\tdisplays all databases\n" +
             "\tArguments:\n" +
             "\t\tDATABASE   => use 'database name' to display that database's tables\n" +
-            "\t\tTABLE      => use 'table name' to display that table's columns, indexes, primary key and row count\n" +
-            "asd" +
-            "asd" +
-            "";
+            "\t\tTABLE      => use 'table name' to display that table's columns, indexes, primary key and row count\n";
     private static String HELP_SHOW = "";
     private static String HELP_EXIT = "";
 
