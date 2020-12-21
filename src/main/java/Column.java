@@ -1,8 +1,8 @@
 import java.util.Objects;
 
 public class Column {
-    private String name;
-    private Type type;
+    private final String name;
+    private final Type type;
 
     public Column(String name, Type type) {
         this.name = name;

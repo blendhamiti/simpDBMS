@@ -11,7 +11,9 @@ import java.io.Writer;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 
 public class FileManager {
 
@@ -51,7 +53,7 @@ public class FileManager {
     public static boolean deleteDirectory(Path path, boolean deleteRecursively) {
         if (!deleteRecursively) return FileManager.deleteDirectory(path);
         try {
-            Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(path, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     Files.delete(file);
@@ -67,37 +69,18 @@ public class FileManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return Files.exists(path);
+        return !Files.exists(path);
     }
 
-    public static boolean clearDirectory(Path path, boolean deleteRecursively) {
-        // perform operations
-        try {
-            Files.walkFileTree(path, null, deleteRecursively ? Integer.MAX_VALUE : 0, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
+    public static boolean clearDirectory(Path path) {
+        boolean allCleared = true;
+        Collection<Path> subPaths = FileManager.getSubDirectories(path);
+        if (subPaths != null) {
+            for (Path subPath : subPaths)
+                if (!FileManager.deleteDirectory(subPath, true))
+                    allCleared = false;
         }
-        // check result
-        try {
-            Files.walkFileTree(path, null, deleteRecursively ? Integer.MAX_VALUE : 0, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    throw new DirectoryNotEmptyException(file.toString());
-                }
-            });
-            return true;
-        } catch (DirectoryNotEmptyException e) {
-            return false;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
+        return allCleared;
     }
 
     public static Collection<Path> getSubDirectories(Path path) {
