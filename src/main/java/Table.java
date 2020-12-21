@@ -4,6 +4,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,20 +30,24 @@ public class Table {
         this.columns = new LinkedHashSet<>();
         // metadata file is to be created (which means that this is a new table)
         if (FileManager.getOrCreateFile(Paths.get(root.toString(), "metadata.json"))) {
+            // create metadata file
             JSONObject metadata = new JSONObject();
             JSONArray jsonColumnsArray = new JSONArray();
             metadata.put("columns", jsonColumnsArray);
             metadata.put("primaryKey", null);
             metadata.put("rowCount", 0);
             FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
-            if (columns != null)
-                columns.forEach(column -> createColumn(column.getName(), column.getType()));
-            if (primaryKey != null)
-                setPrimaryKey(primaryKey);
+
+            // fetch columns and primary key
+            if (columns == null) throw new IllegalArgumentException();
+            columns.forEach(column -> createColumn(column.getName(), column.getType()));
+            if (primaryKey != null) setPrimaryKey(primaryKey);
+
             // write headers in the table csv file
             try {
                 CSVPrinter printer = FileManager.writeCsv(Paths.get(root.toString(), getFileName()),
                         columns.stream().map(Column::getName).toArray(String[]::new));
+                if (printer == null) throw new FileNotFoundException();
                 printer.close(true);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -197,11 +202,13 @@ public class Table {
                 Paths.get(root.toString(), getFileName()),
                 columns.stream().map(Column::getName).toArray(String[]::new));
         List<Record> records;
-        for (CSVRecord csvRecord : parser) {
-            records = new ArrayList<>();
-            for (int i = 0; i < csvRecord.size(); i++)
-                records.add(new Record(csvRecord.get(i), getColumn(parser.getHeaderNames().get(i)).getType()));
-            rows.add(new Row(records, columns, primaryKey));
+        if (parser != null) {
+            for (CSVRecord csvRecord : parser) {
+                records = new ArrayList<>();
+                for (int i = 0; i < csvRecord.size(); i++)
+                    records.add(new Record(csvRecord.get(i), getColumn(parser.getHeaderNames().get(i)).getType()));
+                rows.add(new Row(records, columns, primaryKey));
+            }
         }
         return rows;
     }
@@ -218,7 +225,7 @@ public class Table {
     }
 
     public List<Row> getRow(Column column, Record record, Filter filter) {
-        // check fi record in query is blank
+        // check if record in query is blank
         if (record.getValue().isBlank()) return null;
 
         // prepare list for rows that match
@@ -228,8 +235,7 @@ public class Table {
 
             case EQUAL_TO:
                 if (containsIndex(column)) {
-                    List<Address> addresses = new ArrayList<>();
-                    addresses.addAll(getIndex(column).getAddress(record));
+                    List<Address> addresses = new ArrayList<>(getIndex(column).getAddress(record));
                     List<Row> allRows = getRows();
                     for (Address address : addresses)
                         rows.add(allRows.get(address.getLine()));
@@ -307,16 +313,16 @@ public class Table {
 
     public boolean containsRow(Row row) {
         if (primaryKey == null) return false;
-        if (row.getRecord(primaryKey).isBlank()) return true;
         return getRow(primaryKey, row.getRecord(primaryKey), Filter.EQUAL_TO) != null;
     }
 
     public boolean addRow(List<Record> records) {
         Row row = new Row(records, columns, primaryKey);
-        if (containsRow(row)) return false;
         if (primaryKey != null && row.getRecord(primaryKey).isBlank()) return false;
+        if (containsRow(row)) return false;
         try {
             CSVPrinter printer = FileManager.appendCsv(Paths.get(root.toString(), getFileName()));
+            if (printer == null) return false;
             for (Record record : records)
                 printer.print(record);
             printer.close(true);
@@ -338,7 +344,7 @@ public class Table {
         List<Row> rows = getRows();
         int lineNumber = 0;
         boolean isRemoved = false;
-        if (getPrimaryKey() != null && containsIndex(primaryKey)) {
+        if (primaryKey != null && containsIndex(primaryKey)) {
             // use index to find lineNumber
             rows.removeIf(currentRow -> currentRow.equals(row));
             lineNumber = getIndex(primaryKey).getAddress(row.getRecord(primaryKey)).get(0).getLine();
