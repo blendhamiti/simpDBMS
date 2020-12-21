@@ -36,10 +36,11 @@ public class Database {
         return getTable(name) != null;
     }
 
-    public boolean createTable(String name, Collection<Column> columns, Column primaryKey) {
-        if (containsTable(name)) return false;
-        tables.add(new Table(Paths.get(root.toString(), name), columns, primaryKey));
-        return true;
+    public Table createTable(String name, Collection<Column> columns, Column primaryKey) {
+        if (containsTable(name)) return null;
+        Table table = new Table(Paths.get(root.toString(), name), columns, primaryKey);
+        tables.add(table);
+        return table;
     }
 
     public boolean removeTable(String name) {

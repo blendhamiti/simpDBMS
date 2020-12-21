@@ -1,0 +1,1 @@
+{"columns":[{"name":"name","type":"STRING"},{"name":"age","type":"INTEGER"}],"rowCount":2,"primaryKey":"name"}

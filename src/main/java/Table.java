@@ -245,6 +245,7 @@ public class Table {
                         if (currentRow.getRecord(column).equals(record))
                             rows.add(currentRow);
                 }
+                break;
 
             case NOT_EQUAL_TO:
                 if (containsIndex(column)) {
@@ -262,6 +263,7 @@ public class Table {
                         if (!currentRow.getRecord(column).equals(record))
                             rows.add(currentRow);
                 }
+                break;
 
             case LARGER_THAN:
                 if (containsIndex(column)) {
@@ -279,10 +281,12 @@ public class Table {
                         if (currentRow.getRecord(column).compareTo(record) > 0)
                             rows.add(currentRow);
                 }
+                break;
 
             case LARGER_THAN_OR_EQUAL_TO:
                 rows.addAll(getRow(column, record, Filter.LARGER_THAN));
                 rows.addAll(getRow(column, record, Filter.EQUAL_TO));
+                break;
 
             case SMALLER_THAN:
                 if (containsIndex(column)) {
@@ -300,15 +304,18 @@ public class Table {
                         if (currentRow.getRecord(column).compareTo(record) < 0)
                             rows.add(currentRow);
                 }
+                break;
 
             case SMALLER_THAN_OR_EQUAL_TO:
                 rows.addAll(getRow(column, record, Filter.SMALLER_THAN));
                 rows.addAll(getRow(column, record, Filter.EQUAL_TO));
+                break;
 
             default:
                 rows.addAll(getRow(column, record, Filter.EQUAL_TO));
+                break;
         }
-        return rows;
+        return (rows.isEmpty()) ? null : rows;
     }
 
     public boolean containsRow(Row row) {
@@ -325,6 +332,7 @@ public class Table {
             if (printer == null) return false;
             for (Record record : records)
                 printer.print(record);
+            printer.println();
             printer.close(true);
         } catch (IOException e) {
             e.printStackTrace();

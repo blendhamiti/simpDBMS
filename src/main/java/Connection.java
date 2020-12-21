@@ -38,10 +38,11 @@ public class Connection {
         return getDatabase(name) != null;
     }
 
-    public boolean createDatabase(String name) {
-        if (containsDatabase(name)) return false;
-        databases.add(new Database(Paths.get(root.toString(), name)));
-        return true;
+    public Database createDatabase(String name) {
+        if (containsDatabase(name)) return null;
+        Database database = new Database(Paths.get(root.toString(), name));
+        databases.add(database);
+        return database;
     }
 
     public boolean removeDatabase(String name) {

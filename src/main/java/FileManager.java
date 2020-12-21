@@ -63,6 +63,8 @@ public class FileManager {
                     return FileVisitResult.CONTINUE;
                 }
             });
+        } catch (NoSuchFileException e) {
+            return false;
         } catch (IOException e) {
             e.printStackTrace();
         }
