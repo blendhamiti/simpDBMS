@@ -1,0 +1,1 @@
+{"columns":[{"name":"id","type":"INTEGER"},{"name":"brand","type":"STRING"},{"name":"year","type":"INTEGER"}],"rowCount":0,"primaryKey":"id"}

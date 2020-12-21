@@ -16,43 +16,59 @@ public class Table {
     private int rowCount;
     private final Collection<Index> indexes;
 
-    public Table (Path root) {
+    /*
+        Use null for columns and primary key when fetching existing table
+     */
+    public Table (Path root, Collection<Column> columns, Column primaryKey) {
         this.root = root;
 
         // create dir if it doesnt exist
         FileManager.getOrCreateDirectory(root);
 
-        // create table file if it doesnt exist
-        FileManager.getOrCreateFile(Paths.get(root.toString(), getFileName()));
-
-        // fetch columns, primaryKey, rowcount if metadata file exists
-        columns = new LinkedHashSet<>();
+        // fetch or create: columns, primaryKey, rowcount
+        this.columns = new LinkedHashSet<>();
+        // metadata file is to be created (which means that this is a new table)
         if (FileManager.getOrCreateFile(Paths.get(root.toString(), "metadata.json"))) {
             JSONObject metadata = new JSONObject();
             JSONArray jsonColumnsArray = new JSONArray();
             metadata.put("columns", jsonColumnsArray);
-            metadata.put("primaryKey", "");
+            metadata.put("primaryKey", null);
             metadata.put("rowCount", 0);
             FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
+            if (columns != null)
+                columns.forEach(column -> createColumn(column.getName(), column.getType()));
+            if (primaryKey != null)
+                setPrimaryKey(primaryKey);
+            // write headers in the table csv file
+            try {
+                CSVPrinter printer = FileManager.writeCsv(Paths.get(root.toString(), getFileName()),
+                        columns.stream().map(Column::getName).toArray(String[]::new));
+                printer.close(true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+        // metadata file exists
         else {
             JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
             JSONArray jsonColumnsArray = (JSONArray) metadata.get("columns");
             for (Object jsonObject : jsonColumnsArray) {
                 JSONObject jsonColumn = (JSONObject) jsonObject;
-                columns.add(new Column(jsonColumn.get("name").toString(), jsonColumn.get("type").toString()));
+                this.columns.add(new Column(jsonColumn.get("name").toString(), jsonColumn.get("type").toString()));
             }
-            primaryKey = getColumn(metadata.get("primaryKey").toString());
+            this.primaryKey = getColumn(metadata.get("primaryKey").toString());
             rowCount = Integer.parseInt(metadata.get("rowCount").toString());
         }
 
         // fetch indexes if any
         indexes = new LinkedHashSet<>();
-        Objects.requireNonNull(FileManager.getSubDirectories(root))
-                .stream()
-                .filter(file -> file.getFileName().toString().startsWith("index"))
-                .forEach(file -> indexes.add(new Index(file, getColumn(file.getFileName()
-                        .toString().split("_")[1].split("\\.")[0]))));
+        Collection<Path> indexPaths = FileManager.getSubDirectories(root);
+        if (indexPaths != null) {
+            indexPaths.stream()
+                    .filter(file -> file.getFileName().toString().startsWith("index"))
+                    .forEach(file -> indexes.add(new Index(file, getColumn(file.getFileName()
+                            .toString().split("_")[1].split("\\.")[0]))));
+        }
     }
 
     public String getName() {
@@ -67,13 +83,18 @@ public class Table {
         return primaryKey;
     }
 
-    public boolean setPrimaryKey(Column column) {
+    /*
+        primary key can be set only at time of table creation
+     */
+    private boolean setPrimaryKey(Column column) {
         // check that column does not have null or duplicate entries
-        Set<Record> recordSet = new HashSet<>();
-        for (Record record : getRows(column)) {
-            if (record.isBlank()) return false;
-            if (!recordSet.add(record)) return false;
-        }
+        if (!containsColumn(column.getName())) return false;
+        // check if column records are unique
+        // Set<Record> recordSet = new HashSet<>();
+        // for (Record record : getRows(column)) {
+        //     if (record.isBlank()) return false;
+        //     if (!recordSet.add(record)) return false;
+        // }
         primaryKey = column;
         // update metadata file
         JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
@@ -86,7 +107,7 @@ public class Table {
         return rowCount;
     }
 
-    public int setRowCount(int rowCount) {
+    private int setRowCount(int rowCount) {
         JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
         metadata.put("rowCount", rowCount);
         FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
@@ -94,19 +115,19 @@ public class Table {
         return rowCount;
     }
 
-    public int rowCountIncrement() {
+    private int rowCountIncrement() {
         return setRowCount(++rowCount);
     }
 
-    public int rowCountIncrement(int increment) {
+    private int rowCountIncrement(int increment) {
         return setRowCount(rowCount + increment);
     }
 
-    public int rowCountDecrement() {
+    private int rowCountDecrement() {
         return setRowCount(--rowCount);
     }
 
-    public int rowCountDecrement(int decrement) {
+    private int rowCountDecrement(int decrement) {
         return setRowCount(rowCount - decrement);
     }
 
@@ -125,8 +146,9 @@ public class Table {
         return getColumn(name) != null;
     }
 
-    public boolean createColumn(String name, Type type) {
+    private boolean createColumn(String name, Type type) {
         if (containsColumn(name)) return false;
+        // if first column, create csv header
         // update metadata file
         JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
         JSONArray jsonColumnsArray = (JSONArray) metadata.get("columns");
@@ -138,25 +160,6 @@ public class Table {
         FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
         // add to collection
         columns.add(new Column(name, type));
-        return true;
-    }
-
-    public boolean removeColumn(String name) {
-        if (!containsColumn(name)) return false;
-        // update metadata file
-        JSONObject metadata = FileManager.readJson(Paths.get(root.toString(), "metadata.json"));
-        JSONArray jsonColumnsArray = (JSONArray) metadata.get("columns");
-        JSONObject column = null;
-        for (Object jsonObject : jsonColumnsArray) {
-            JSONObject jsonColumn = (JSONObject) jsonObject;
-            if (jsonColumn.get("name").equals(name))
-                column = jsonColumn;
-        }
-        jsonColumnsArray.remove(column);
-        metadata.put("columns", jsonColumnsArray);
-        FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
-        // remove from collection
-        columns.remove(getColumn(name));
         return true;
     }
 
@@ -191,8 +194,8 @@ public class Table {
     public List<Row> getRows() {
         List<Row> rows = new ArrayList<>();
         CSVParser parser = FileManager.readCsv(
-                Paths.get(root.toString(), getName() + ".csv"),
-                Arrays.toString(columns.stream().map(Column::getName).toArray(String[]::new)));
+                Paths.get(root.toString(), getFileName()),
+                columns.stream().map(Column::getName).toArray(String[]::new));
         List<Record> records;
         for (CSVRecord csvRecord : parser) {
             records = new ArrayList<>();
@@ -208,8 +211,9 @@ public class Table {
                 Paths.get(root.toString(), getName() + ".csv"),
                 Arrays.toString(columns.stream().map(Column::getName).toArray(String[]::new)));
         List<Record> records = new ArrayList<>();
-        for (CSVRecord csvRecord : parser)
-            records.add(new Record(csvRecord.get(column.getName()), column.getType()));
+        if (parser != null)
+            for (CSVRecord csvRecord : parser)
+                records.add(new Record(csvRecord.get(column.getName()), column.getType()));
         return records;
     }
 
@@ -315,7 +319,7 @@ public class Table {
             CSVPrinter printer = FileManager.appendCsv(Paths.get(root.toString(), getFileName()));
             for (Record record : records)
                 printer.print(record);
-            printer.flush();
+            printer.close(true);
         } catch (IOException e) {
             e.printStackTrace();
         }

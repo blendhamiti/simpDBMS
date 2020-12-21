@@ -43,7 +43,7 @@ public class Index {
             for (Record record : entries.keySet())
                 for (Address address : entries.get(record))
                     printer.printRecord(column.getType() == Type.INTEGER ? Integer.valueOf(record.getValue()) : record.getValue(), address);
-            printer.flush();
+            printer.close(true);
         } catch (IOException e) {
             e.printStackTrace();
         }

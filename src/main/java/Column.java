@@ -5,11 +5,15 @@ public class Column {
     private final Type type;
 
     public Column(String name, Type type) {
+        if (name.isBlank())
+            throw new IllegalArgumentException();
         this.name = name;
         this.type = type;
     }
 
     public Column(String name, String type) {
+        if (name.isBlank())
+            throw new IllegalArgumentException();
         this.name = name;
         if      (type.equals(Type.INTEGER.name()))
             this.type = Type.INTEGER;

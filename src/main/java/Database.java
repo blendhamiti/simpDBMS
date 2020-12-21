@@ -14,7 +14,7 @@ public class Database {
         tables = new HashSet<>();
         Collection<Path> tablePaths = FileManager.getSubDirectories(root);
         if (tablePaths != null)
-            tablePaths.forEach(dir -> tables.add(new Table(dir)));
+            tablePaths.forEach(dir -> tables.add(new Table(dir, null, null)));
     }
 
     public String getName() {
@@ -36,9 +36,9 @@ public class Database {
         return getTable(name) != null;
     }
 
-    public boolean createTable(String name) {
+    public boolean createTable(String name, Collection<Column> columns, Column primaryKey) {
         if (containsTable(name)) return false;
-        tables.add(new Table(Paths.get(root.toString(), name)));
+        tables.add(new Table(Paths.get(root.toString(), name), columns, primaryKey));
         return true;
     }
 
