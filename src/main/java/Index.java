@@ -1,7 +1,6 @@
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -18,7 +17,7 @@ public class Index {
         CSVParser parser = FileManager.readCsv(filePath, column.getName(), "address");
         for (CSVRecord csvRecord : parser) {
             Record record = new Record(csvRecord.get(column.getName()), column.getType());
-            Address address = new Address(Integer.valueOf(csvRecord.get("address")));
+            Address address = new Address(Integer.parseInt(csvRecord.get("address")));
             addEntry(record, address);
         }
     }
@@ -44,6 +43,7 @@ public class Index {
             for (Record record : entries.keySet())
                 for (Address address : entries.get(record))
                     printer.printRecord(column.getType() == Type.INTEGER ? Integer.valueOf(record.getValue()) : record.getValue(), address);
+            printer.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -2,7 +2,7 @@ import java.util.Objects;
 
 public class Record implements Comparable<Record> {
     private String value;
-    private Type type;
+    private final Type type;
 
     public Record(String value, Type type) {
         this.value = value;

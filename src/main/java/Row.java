@@ -1,7 +1,7 @@
 import java.util.*;
 
 public class Row {
-    private List<Record> records;
+    private final List<Record> records;
     private final Collection<Column> columns;
     private final Column primaryKey;
 

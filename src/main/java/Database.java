@@ -12,8 +12,9 @@ public class Database {
         this.root = root;
         FileManager.getOrCreateDirectory(root);
         tables = new HashSet<>();
-        Objects.requireNonNull(FileManager.getSubDirectories(root))
-                .forEach(dir -> tables.add(new Table(dir)));
+        Collection<Path> tablePaths = FileManager.getSubDirectories(root);
+        if (tablePaths != null)
+            tablePaths.forEach(dir -> tables.add(new Table(dir)));
     }
 
     public String getName() {

@@ -4,16 +4,13 @@ import org.apache.commons.csv.CSVPrinter;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Objects;
 
 public class FileManager {
 
@@ -121,7 +118,7 @@ public class FileManager {
     public static CSVParser readCsv(Path path, String... columns) {
         try {
             Reader in = Files.newBufferedReader(path);
-            return new CSVParser(in, CSVFormat.DEFAULT.withHeader(columns));
+            return new CSVParser(in, CSVFormat.DEFAULT.withHeader(columns).withFirstRecordAsHeader());
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -131,7 +128,7 @@ public class FileManager {
     public static CSVPrinter writeCsv(Path path, String... columns) {
         try {
             Writer out = Files.newBufferedWriter(path);
-            return new CSVPrinter(out, CSVFormat.DEFAULT.withHeader(columns));
+            return new CSVPrinter(out, (columns.length == 0) ? CSVFormat.DEFAULT : CSVFormat.DEFAULT.withHeader(columns));
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -141,7 +138,7 @@ public class FileManager {
     public static CSVPrinter appendCsv(Path path, String... columns) {
         try {
             Writer out = Files.newBufferedWriter(path, StandardOpenOption.APPEND);
-            return new CSVPrinter(out, CSVFormat.DEFAULT.withHeader(columns));
+            return new CSVPrinter(out, (columns.length == 0) ? CSVFormat.DEFAULT : CSVFormat.DEFAULT.withHeader(columns));
         } catch (IOException e) {
             e.printStackTrace();
             return null;
