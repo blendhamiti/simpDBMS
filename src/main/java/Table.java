@@ -216,7 +216,7 @@ public class Table {
     public List<Record> getRows(Column column) {
         CSVParser parser = FileManager.readCsv(
                 Paths.get(root.toString(), getName() + ".csv"),
-                Arrays.toString(columns.stream().map(Column::getName).toArray(String[]::new)));
+                columns.stream().map(Column::getName).toArray(String[]::new));
         List<Record> records = new ArrayList<>();
         if (parser != null)
             for (CSVRecord csvRecord : parser)
@@ -231,14 +231,18 @@ public class Table {
         // prepare list for rows that match
         List<Row> rows = new ArrayList<>();
 
+        // prepare rowsEqual list for some of the cases
+        List<Row> rowsEqual;
+
         switch (filter) {
 
             case EQUAL_TO:
                 if (containsIndex(column)) {
-                    List<Address> addresses = new ArrayList<>(getIndex(column).getAddress(record));
+                    List<Address> addresses = getIndex(column).getAddress(record);
+                    if (addresses == null) break;
                     List<Row> allRows = getRows();
                     for (Address address : addresses)
-                        rows.add(allRows.get(address.getLine()));
+                        rows.add(allRows.get(address.getLine() - 1));
                 }
                 else {
                     for (Row currentRow : getRows())
@@ -256,7 +260,7 @@ public class Table {
                             .forEach(rec -> addresses.addAll(getIndex(column).getAddress(rec)));
                     List<Row> allRows = getRows();
                     for (Address address : addresses)
-                        rows.add(allRows.get(address.getLine()));
+                        rows.add(allRows.get(address.getLine() - 1));
                 }
                 else {
                     for (Row currentRow : getRows())
@@ -274,7 +278,7 @@ public class Table {
                             .forEach(rec -> addresses.addAll(getIndex(column).getAddress(rec)));
                     List<Row> allRows = getRows();
                     for (Address address : addresses)
-                        rows.add(allRows.get(address.getLine()));
+                        rows.add(allRows.get(address.getLine() - 1));
                 }
                 else {
                     for (Row currentRow : getRows())
@@ -284,8 +288,10 @@ public class Table {
                 break;
 
             case LARGER_THAN_OR_EQUAL_TO:
-                rows.addAll(getRow(column, record, Filter.LARGER_THAN));
-                rows.addAll(getRow(column, record, Filter.EQUAL_TO));
+                List<Row> rowsLargerThan = getRow(column, record, Filter.LARGER_THAN);
+                if (rowsLargerThan != null) rows.addAll(rowsLargerThan);
+                rowsEqual = getRow(column, record, Filter.EQUAL_TO);
+                if (rowsEqual != null) rows.addAll(rowsEqual);
                 break;
 
             case SMALLER_THAN:
@@ -297,7 +303,7 @@ public class Table {
                             .forEach(rec -> addresses.addAll(getIndex(column).getAddress(rec)));
                     List<Row> allRows = getRows();
                     for (Address address : addresses)
-                        rows.add(allRows.get(address.getLine()));
+                        rows.add(allRows.get(address.getLine() - 1));
                 }
                 else {
                     for (Row currentRow : getRows())
@@ -307,12 +313,15 @@ public class Table {
                 break;
 
             case SMALLER_THAN_OR_EQUAL_TO:
-                rows.addAll(getRow(column, record, Filter.SMALLER_THAN));
-                rows.addAll(getRow(column, record, Filter.EQUAL_TO));
+                List<Row> rowsSmallerThan = getRow(column, record, Filter.SMALLER_THAN);
+                if (rowsSmallerThan != null) rows.addAll(rowsSmallerThan);
+                rowsEqual = getRow(column, record, Filter.EQUAL_TO);
+                if (rowsEqual != null) rows.addAll(rowsEqual);
                 break;
 
             default:
-                rows.addAll(getRow(column, record, Filter.EQUAL_TO));
+                rowsEqual = getRow(column, record, Filter.EQUAL_TO);
+                if (rowsEqual != null) rows.addAll(rowsEqual);
                 break;
         }
         return (rows.isEmpty()) ? null : rows;
@@ -337,9 +346,9 @@ public class Table {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        rowCountIncrement();
+        int lineNumber = rowCountIncrement();
         for (Index index : indexes)
-            index.addEntry(row.getRecord(index.getColumn()), new Address(rowCountIncrement()));
+            index.addEntry(row.getRecord(index.getColumn()), new Address(lineNumber));
         return true;
     }
 
@@ -354,7 +363,8 @@ public class Table {
         boolean isRemoved = false;
         if (primaryKey != null && containsIndex(primaryKey)) {
             // use index to find lineNumber
-            rows.removeIf(currentRow -> currentRow.equals(row));
+            rows.remove(row);
+            // rows.removeIf(currentRow -> currentRow.equals(row));
             lineNumber = getIndex(primaryKey).getAddress(row.getRecord(primaryKey)).get(0).getLine();
             isRemoved = true;
         }
@@ -370,6 +380,18 @@ public class Table {
             }
         }
         if (!isRemoved) return false;
+        // remove row from csv file
+        try {
+            CSVPrinter printer = FileManager.writeCsv(
+                    Paths.get(root.toString(), getFileName()),
+                    columns.stream().map(Column::getName).toArray(String[]::new));
+            if (printer == null) return false;
+            for (Row rowToBeWritten : rows)
+                printer.printRecord(rowToBeWritten.getRecords());
+            printer.close(true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         rowCountDecrement();
         for (Index index : indexes)
             index.removeEntry(row.getRecord(index.getColumn()), new Address(lineNumber));

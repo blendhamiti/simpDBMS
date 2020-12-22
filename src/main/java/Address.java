@@ -1,7 +1,7 @@
 import java.util.Objects;
 
 public class Address implements Comparable<Address> {
-    private final int line;
+    private int line;
 
     public Address(int line) {
         this.line = line;
@@ -9,6 +9,10 @@ public class Address implements Comparable<Address> {
 
     public int getLine() {
         return line;
+    }
+
+    public void setLine(int line) {
+        this.line = line;
     }
 
     @Override

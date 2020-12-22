@@ -29,6 +29,8 @@ public class Row {
         while (recordIterator.hasNext() && columnIterator.hasNext())
             if (columnIterator.next().equals(column))
                 return recordIterator.next();
+            else
+                recordIterator.next();
         return null;
     }
 
@@ -67,8 +69,6 @@ public class Row {
 
     @Override
     public String toString() {
-        return "Row{" +
-                "records=" + records +
-                '}';
+        return records.toString();
     }
 }

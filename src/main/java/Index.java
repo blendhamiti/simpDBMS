@@ -71,22 +71,19 @@ public class Index {
         entries.put(record, addresses);
     }
 
-    public void updateEntry(Record newRecord, Address address) {
-        if (newRecord.getType() != column.getType()) throw new IllegalArgumentException();
-        for (Record record : entries.keySet()) {
-            if (entries.get(record).contains(address))
-                removeEntry(record, address);
-        }
-        addEntry(newRecord, address);
-    }
-
     public void removeEntry(Record record, Address address) {
+        // remove entry
         if (record.getType() != column.getType()) throw new IllegalArgumentException();
-        if (entries.get(record).size() <= 1) {
+        if (entries.get(record).size() <= 1)
             entries.remove(record);
-            return;
+        else
+            entries.get(record).remove(address);
+        // decrement all addresses of entries below
+        for (Record entry : entries.keySet()) {
+            for (Address entryAddress : entries.get(entry))
+                if (entryAddress.getLine() > address.getLine())
+                    entryAddress.setLine(entryAddress.getLine() - 1);
         }
-        entries.get(record).remove(address);
     }
 
     public List<Address> getAddress(Record record) {
