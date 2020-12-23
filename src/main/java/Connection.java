@@ -13,8 +13,15 @@ public class Connection {
         this.root = root;
         FileManager.getOrCreateDirectory(root);
         databases = new HashSet<>();
-        Objects.requireNonNull(FileManager.getSubDirectories(root))
-            .forEach(dir -> databases.add(new Database(dir)));
+        Collection<Path> databasePaths = FileManager.getSubDirectories(root);
+        if (databasePaths != null) {
+            for (Path databasePath : databasePaths) {
+                if (FileManager.isEmpty(databasePath))
+                    FileManager.deleteDirectory(databasePath);
+                else
+                    databases.add(new Database(databasePath));
+            }
+        }
     }
 
     public void close() {
@@ -47,7 +54,9 @@ public class Connection {
 
     public boolean removeDatabase(String name) {
         if (!containsDatabase(name)) return false;
-        return FileManager.deleteDirectory(Paths.get(root.toString(), name), true);
+        FileManager.clearDirectory(Paths.get(root.toString(), name));
+        databases.remove(getDatabase(name));
+        return true;
     }
 
     @Override

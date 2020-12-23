@@ -18,6 +18,7 @@ public class QueryParser {
     private static String COLUMN_NOT_FOUND = "Column was not found: ";
     private static String DB_EXISTS = "Database exists: ";
     private static String TABLE_EXISTS = "Table exists: ";
+    private static String INDEX_EXISTS = "Index exists: ";
     private static String NO_LOADED_DB_OR_TABLE_EXISTS = "There is no loaded database, or table exists: ";
 
     private static String HELP_GENERAL =
@@ -162,10 +163,13 @@ public class QueryParser {
                     switch (arguments[1]) {
                         case "database":
                             if (arguments.length == 3) {
-                                if (!connection.containsDatabase(arguments[2]))
+                                if (!connection.containsDatabase(arguments[2])) {
                                     connection.createDatabase(arguments[2]);
-                                else
+                                    result = parse("show");
+                                }
+                                else {
                                     result = DB_EXISTS + arguments[2];
+                                }
                             }
                             else {
                                 result = HELP_CREATE;
@@ -212,10 +216,15 @@ public class QueryParser {
                                     case "index":
                                         if (arguments.length == 5) {
                                             if (loadedDatabase != null && loadedDatabase.containsTable(arguments[2])) {
-                                                if (loadedDatabase.getTable(arguments[2]).createIndex(loadedDatabase.getTable(arguments[2]).getColumn(arguments[4])))
-                                                    result = parse("show" + " " + loadedDatabase.getName() + " " + loadedDatabase.getTable(arguments[2]));
-                                                else
-                                                    result = COLUMN_NOT_FOUND + arguments[4];
+                                                if (loadedDatabase.getTable(arguments[2]).createIndex(loadedDatabase.getTable(arguments[2]).getColumn(arguments[4]))) {
+                                                    result = parse("show" + " " + loadedDatabase.getName() + " " + loadedDatabase.getTable(arguments[2]).getName());
+                                                }
+                                                else {
+                                                    if (loadedDatabase.getTable(arguments[2]).containsIndex(loadedDatabase.getTable(arguments[2]).getColumn(arguments[4])))
+                                                        result = INDEX_EXISTS + arguments[4];
+                                                    else
+                                                        result = COLUMN_NOT_FOUND + arguments[4];
+                                                }
                                             }
                                             else {
                                                 result = TABLE_NOT_FOUND + arguments[2];
@@ -268,7 +277,7 @@ public class QueryParser {
                             else if (arguments.length == 5) {
                                 if (loadedDatabase != null && loadedDatabase.containsTable(arguments[2])) {
                                     if (loadedDatabase.getTable(arguments[2]).removeIndex(loadedDatabase.getTable(arguments[2]).getColumn(arguments[4])))
-                                        result = parse("show" + " " + loadedDatabase.getName() + " " + loadedDatabase.getTable(arguments[2]));
+                                        result = parse("show" + " " + loadedDatabase.getName() + " " + loadedDatabase.getTable(arguments[2]).getName());
                                     else
                                         result = INDEX_NOT_FOUND + arguments[4];
                                 }

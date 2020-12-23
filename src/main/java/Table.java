@@ -4,6 +4,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,8 +25,7 @@ public class Table {
         this.root = root;
 
         // create dir if it doesnt exist
-        // TODO: solve non-deletable tables
-        if (FileManager.getOrCreateDirectory(root))
+        FileManager.getOrCreateDirectory(root);
 
         // fetch or create: columns, primaryKey, rowcount
         this.columns = new LinkedHashSet<>();

@@ -13,8 +13,14 @@ public class Database {
         FileManager.getOrCreateDirectory(root);
         tables = new HashSet<>();
         Collection<Path> tablePaths = FileManager.getSubDirectories(root);
-        if (tablePaths != null)
-            tablePaths.forEach(dir -> tables.add(new Table(dir, null, null)));
+        if (tablePaths != null) {
+            for (Path tablePath : tablePaths) {
+                if (FileManager.isEmpty(tablePath))
+                    FileManager.deleteDirectory(tablePath);
+                else
+                    tables.add(new Table(tablePath, null, null));
+            }
+        }
     }
 
     public String getName() {
@@ -45,7 +51,7 @@ public class Database {
 
     public boolean removeTable(String name) {
         if (!containsTable(name)) return false;
-        FileManager.deleteDirectory(Paths.get(root.toString(), name), true);
+        FileManager.clearDirectory(Paths.get(root.toString(), name));
         tables.remove(getTable(name));
         return true;
     }

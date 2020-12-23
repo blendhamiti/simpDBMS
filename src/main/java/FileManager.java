@@ -47,6 +47,16 @@ public class FileManager {
         }
     }
 
+    public static boolean exists(Path path) {
+        return Files.exists(path);
+    }
+
+    public static boolean isEmpty(Path path) {
+        Collection<Path> paths = FileManager.getSubDirectories(path);
+        if (paths == null) return false;
+        return paths.isEmpty();
+    }
+
     public static boolean deleteDirectory(Path path, boolean deleteRecursively) {
         if (!deleteRecursively) return FileManager.deleteDirectory(path);
         try {
