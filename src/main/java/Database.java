@@ -45,7 +45,9 @@ public class Database {
 
     public boolean removeTable(String name) {
         if (!containsTable(name)) return false;
-        return FileManager.deleteDirectory(Paths.get(root.toString(), name), true);
+        FileManager.deleteDirectory(Paths.get(root.toString(), name), true);
+        tables.remove(getTable(name));
+        return true;
     }
 
     @Override
@@ -63,7 +65,7 @@ public class Database {
 
     @Override
     public String toString() {
-        return "'" + getName() + "'";
+        return "Database='" + getName() + "'";
     }
 }
 

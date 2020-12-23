@@ -24,7 +24,8 @@ public class Table {
         this.root = root;
 
         // create dir if it doesnt exist
-        FileManager.getOrCreateDirectory(root);
+        // TODO: solve non-deletable tables
+        if (FileManager.getOrCreateDirectory(root))
 
         // fetch or create: columns, primaryKey, rowcount
         this.columns = new LinkedHashSet<>();
@@ -34,7 +35,7 @@ public class Table {
             JSONObject metadata = new JSONObject();
             JSONArray jsonColumnsArray = new JSONArray();
             metadata.put("columns", jsonColumnsArray);
-            metadata.put("primaryKey", null);
+            metadata.put("primaryKey", "");
             metadata.put("rowCount", 0);
             FileManager.writeJson(Paths.get(root.toString(), "metadata.json"), metadata);
 
@@ -414,7 +415,7 @@ public class Table {
     @Override
     public String toString() {
         String primaryKeyColumnName = (primaryKey == null)  ? "" : primaryKey.getName();
-        return "{'" + getName() +
+        return "Table={'" + getName() +
                 "', columns=" + columns +
                 ", indexes=" + indexes +
                 ", primaryKey='" + primaryKeyColumnName +
