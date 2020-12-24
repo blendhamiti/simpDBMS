@@ -4,12 +4,10 @@ import java.nio.file.Path;
 public class User {
 
     public static void main(String[] args) {
-        // Path root = FileSystems.getDefault().getPath("src", "main", "resources", "databases");
         Path root = null;
         // parse arguments
         if (args.length < 1) {
-            System.out.println("Please specify the connection path.");
-            System.exit(0);
+            root = FileSystems.getDefault().getPath("src", "main", "resources", "databases");
         }
         else if (args.length == 1) {
             root = FileSystems.getDefault().getPath(args[0]);

@@ -330,7 +330,7 @@ public class Table {
 
     public boolean containsRow(Row row) {
         if (primaryKey == null) return false;
-        return getRow(primaryKey, row.getRecord(primaryKey), Filter.EQUAL_TO) != null;
+        return !getRow(primaryKey, row.getRecord(primaryKey), Filter.EQUAL_TO).isEmpty();
     }
 
     public boolean addRow(List<Record> records) {

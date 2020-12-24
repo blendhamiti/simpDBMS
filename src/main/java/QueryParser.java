@@ -4,7 +4,7 @@ public class QueryParser {
     private Connection connection;
     private String result;
     private String command;
-    private static final String[] commands = {"show", "load", "create", "remove", "get", "add", "update", "delete"};
+    private static final String[] commands = {"help", "exit", "show", "load", "create", "remove", "get", "add", "update", "delete"};
     private Database loadedDatabase;
 
     private static final String DB_NOT_FOUND = "Database was not found: ";
@@ -50,7 +50,7 @@ public class QueryParser {
                     \tArguments:
                     \t\tTABLE      => specify the table name
                     \t\tCOLUMNS    => specify the columns as "(column_name,column_type;column_name,column_type;...)" with type: {'STRING', 'INTEGER'}
-                    \t\tPK     => specify the primary key column name
+                    \t\tPK         => specify the primary key column name
                     [3] Command: create table TABLE index COLUMN
                     \tDescription:
                     \t\tcreates index of specified column
@@ -166,12 +166,18 @@ public class QueryParser {
             case "show":
                 switch (arguments.length) {
                     case 1:
-                        result = connection.getDatabases().toString();
+                        Collection<Database> databases = connection.getDatabases();
+                        result = "";
+                        for (Database database : databases)
+                            result += database.toString() + "\n";
                         break;
 
                     case 2:
                         if (connection.containsDatabase(arguments[1])) {
-                            result = connection.getDatabase(arguments[1]).getTables().toString();
+                            Collection<Table> tables = connection.getDatabase(arguments[1]).getTables();
+                            result = "";
+                            for (Table table : tables)
+                                result += table.toString() + "\n";
                         }
                         else {
                             result = DB_NOT_FOUND + arguments[1];
@@ -204,7 +210,7 @@ public class QueryParser {
                 else if (arguments.length == 2) {
                     if (connection.containsDatabase(arguments[1])) {
                         loadedDatabase = connection.getDatabase(arguments[1]);
-                        result = loadedDatabase.toString();
+                        result = loadedDatabase.toString() + "\n";
                     }
                     else {
                         result = DB_NOT_FOUND + arguments[1];
@@ -439,7 +445,7 @@ public class QueryParser {
                             for (Iterator<Column> it = table.getColumns().iterator(); it.hasNext() ; loopCount++)
                                 records.add(new Record(recordsArray[loopCount].replace("\"", ""), it.next().getType()));
                             if (table.addRow(records))
-                                result = new Row(records, table.getColumns(), table.getPrimaryKey()).toString();
+                                result = new Row(records, table.getColumns(), table.getPrimaryKey()).toString() + "\n";
                             else
                                 result = HELP_ADD;
                         }
@@ -488,7 +494,7 @@ public class QueryParser {
                                             for (Iterator<Column> it = table.getColumns().iterator(); it.hasNext() ; loopCount++)
                                                 records.add(new Record(recordsArray[loopCount].replace("\"", ""), it.next().getType()));
                                             if (table.addRow(records))
-                                                result = new Row(records, table.getColumns(), table.getPrimaryKey()).toString();
+                                                result = new Row(records, table.getColumns(), table.getPrimaryKey()).toString() + "\n";
                                             else
                                                 result = HELP_UPDATE;
                                         }
@@ -530,7 +536,7 @@ public class QueryParser {
                                     if (table.removeRow(row))
                                         rowCount++;
                                 }
-                                result = "Deleted " + rowCount + " rows.";
+                                result = "Deleted " + rowCount + " row(s).";
                             }
                             else {
                                 result = HELP_DELETE;
@@ -572,6 +578,7 @@ public class QueryParser {
                 if (arguments.length == 1) {
                     connection.close();
                     connection = null;
+                    result = "Connection closed.";
                 }
                 else {
                     result = HELP_EXIT;
