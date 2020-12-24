@@ -27,7 +27,7 @@ public class Connection {
     public void close() {
         databases.forEach(database -> database.getTables()
                         .forEach(table -> table.getIndexes()
-                                .forEach(index -> index.printIndexToFile())));
+                                .forEach(Index::printIndexToFile)));
     }
 
     public Collection<Database> getDatabases() {

@@ -69,6 +69,6 @@ public class Row {
 
     @Override
     public String toString() {
-        return "Row={" + records.toString() + "}";
+        return records.toString();
     }
 }

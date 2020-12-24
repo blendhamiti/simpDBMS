@@ -226,11 +226,11 @@ public class Table {
     }
 
     public List<Row> getRow(Column column, Record record, Filter filter) {
-        // check if record in query is blank
-        if (record.getValue().isBlank()) return null;
-
         // prepare list for rows that match
         List<Row> rows = new ArrayList<>();
+
+        // check if record in query is blank
+        if (record.getValue().isBlank()) return rows;
 
         // prepare rowsEqual list for some of the cases
         List<Row> rowsEqual;
@@ -325,7 +325,7 @@ public class Table {
                 if (rowsEqual != null) rows.addAll(rowsEqual);
                 break;
         }
-        return (rows.isEmpty()) ? null : rows;
+        return rows;
     }
 
     public boolean containsRow(Row row) {
