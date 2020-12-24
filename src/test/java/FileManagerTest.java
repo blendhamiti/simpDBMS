@@ -3,6 +3,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.json.simple.JSONObject;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -19,6 +20,7 @@ import java.util.Objects;
 public class FileManagerTest {
     private static final Path root = FileSystems.getDefault().getPath("src", "test", "resources", "databases-test");
 
+    @Ignore
     @Test
     public void getOrCreateDirectoryAndFileTest() {
         Assert.assertTrue(FileManager.getOrCreateDirectory(Paths.get(root.toString(), "example-dir")));

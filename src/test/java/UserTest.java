@@ -1,3 +1,4 @@
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.FileSystems;
@@ -40,6 +41,7 @@ public class UserTest {
             System.out.println(record);
     }
 
+    @Ignore
     @Test
     public void queryRecordTest() {
         FileManager.deleteDirectory(Paths.get(root.toString(), "data"), true);
@@ -68,6 +70,7 @@ public class UserTest {
         System.out.println(table.getRow(new Column("name", Type.STRING), new Record("era", Type.STRING), Filter.NOT_EQUAL_TO));
     }
 
+    @Ignore
     @Test
     /*
         Tests both removeRecord and addRecord

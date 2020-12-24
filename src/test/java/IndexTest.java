@@ -1,3 +1,4 @@
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.FileSystems;
@@ -9,6 +10,7 @@ import java.util.List;
 public class IndexTest {
     private static final Path root = FileSystems.getDefault().getPath("src", "test", "resources", "databases-test");
 
+    @Ignore
     @Test
     public void getIndexFromFileTest() {
         Index index = new Index(Paths.get(root.toString(), "file.csv"), new Column("name", Type.STRING));
