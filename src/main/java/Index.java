@@ -37,7 +37,7 @@ public class Index {
         }
     }
 
-    public void printIndexToFile() {
+    public void writeToFile() {
         try {
             CSVPrinter printer = FileManager.writeCsv(filePath, column.getName(), "address");
             for (Record record : entries.keySet())

@@ -27,7 +27,7 @@ public class Connection {
     public void close() {
         databases.forEach(database -> database.getTables()
                         .forEach(table -> table.getIndexes()
-                                .forEach(Index::printIndexToFile)));
+                                .forEach(Index::writeToFile)));
     }
 
     public Collection<Database> getDatabases() {
@@ -76,20 +76,5 @@ public class Connection {
     public String toString() {
         return "Connection{" +
                 "path='" + root + "'}";
-    }
-
-    public static void main(String[] args) {
-
-        Path path = FileSystems.getDefault().getPath("data");
-        Connection connection = new Connection(path);
-        System.out.println(connection.toString());
-
-//        connection.createDatabase("als");
-//        connection.getDatabase("als").createTable("ggh");
-
-//        System.out.println(connection.removeDatabase("als"));
-
-
-
     }
 }

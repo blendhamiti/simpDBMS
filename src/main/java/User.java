@@ -8,7 +8,7 @@ public class User {
         Path root = FileSystems.getDefault().getPath("src", "main", "resources", "databases");
         // parse arguments
         // if (args.length < 1) {
-        //     System.out.println("Please specify the database path.");
+        //     System.out.println("Please specify the connection path.");
         //     System.exit(0);
         // }
         // else if (args.length == 1) {
@@ -18,7 +18,9 @@ public class User {
         //     System.out.println("Too many arguments.");
         //     System.exit(0);
         // }
+        System.out.println("Connected to path: " + root.toAbsolutePath());
         // attach cli to connection
-        CommandLineInterface.to(new Connection(root));
+        QueryParser parser = new QueryParser(new Connection(root));
+        CommandLineInterface.attachTo(parser, true);
     }
 }

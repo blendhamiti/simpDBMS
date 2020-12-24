@@ -21,7 +21,7 @@ public class IndexTest {
         records.add(new Record("blend", Type.STRING));
         records.add(new Record("blends", Type.STRING));
         Index index = new Index(Paths.get(root.toString(), "file.csv"), new Column("name", Type.STRING), records);
-        index.printIndexToFile();
+        index.writeToFile();
         index = new Index(Paths.get(root.toString(), "file.csv"), new Column("name", Type.STRING));
         System.out.println(index.getEntries().toString());
     }
