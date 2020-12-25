@@ -1,4 +1,6 @@
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class QueryParser {
     private Connection connection;
@@ -151,13 +153,17 @@ public class QueryParser {
 
     @SuppressWarnings("StringConcatenationInLoop")
     public String parse(String line) {
-        String[] argumentsCaseInsensitive = line.split(" ");
-        String[] arguments = new String[argumentsCaseInsensitive.length];
+        String regex = "\\((.+?)\\)|(\\S+)";
+        Matcher matcher = Pattern.compile(regex).matcher(line);
+        List<String> argumentsCaseInsensitive = new LinkedList<>();
+        while (matcher.find())
+            argumentsCaseInsensitive.add(matcher.group());
+        String[] arguments = new String[argumentsCaseInsensitive.size()];
         for (int i = 0; i < arguments.length; i++) {
-            if (argumentsCaseInsensitive[i].startsWith("\"") || argumentsCaseInsensitive[i].startsWith("("))
-                arguments[i] = argumentsCaseInsensitive[i];
+            if (argumentsCaseInsensitive.get(i).startsWith("\"") || argumentsCaseInsensitive.get(i).startsWith("("))
+                arguments[i] = argumentsCaseInsensitive.get(i);
             else
-                arguments[i] = argumentsCaseInsensitive[i].trim().toLowerCase();
+                arguments[i] = argumentsCaseInsensitive.get(i).toLowerCase();
         }
 
         command = "Command is: " + Arrays.toString(arguments);
@@ -248,7 +254,9 @@ public class QueryParser {
                                             List<Column> columns = new ArrayList<>();
                                             for (String columnString : columnsString.split(";")) {
                                                 String[] columnDataString = columnString.split(",");
-                                                columns.add(new Column(columnDataString[0].toLowerCase(), columnDataString[1].toUpperCase()));
+                                                columns.add(new Column(
+                                                        columnDataString[0].trim().replace("\"", "").toLowerCase(),
+                                                        columnDataString[1].trim().replace("\"", "").toUpperCase()));
                                             }
                                             if (!columns.isEmpty()) {
                                                 if (arguments.length == 5) {
@@ -443,7 +451,7 @@ public class QueryParser {
                             List<Record> records = new ArrayList<>();
                             int loopCount = 0;
                             for (Iterator<Column> it = table.getColumns().iterator(); it.hasNext() ; loopCount++)
-                                records.add(new Record(recordsArray[loopCount].replace("\"", ""), it.next().getType()));
+                                records.add(new Record(recordsArray[loopCount].trim().replace("\"", ""), it.next().getType()));
                             if (table.addRow(records))
                                 result = new Row(records, table.getColumns(), table.getPrimaryKey()).toString() + "\n";
                             else
@@ -492,7 +500,7 @@ public class QueryParser {
                                             List<Record> records = new ArrayList<>();
                                             int loopCount = 0;
                                             for (Iterator<Column> it = table.getColumns().iterator(); it.hasNext() ; loopCount++)
-                                                records.add(new Record(recordsArray[loopCount].replace("\"", ""), it.next().getType()));
+                                                records.add(new Record(recordsArray[loopCount].trim().replace("\"", ""), it.next().getType()));
                                             if (table.addRow(records))
                                                 result = new Row(records, table.getColumns(), table.getPrimaryKey()).toString() + "\n";
                                             else
