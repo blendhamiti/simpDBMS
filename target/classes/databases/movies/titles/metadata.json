@@ -1,1 +1,0 @@
-{"columns":[{"name":"title","type":"STRING"},{"name":"year","type":"INTEGER"},{"name":"rating","type":"INTEGER"}],"rowCount":0,"primaryKey":"title"}

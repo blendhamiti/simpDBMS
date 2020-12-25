@@ -40,10 +40,12 @@ public class Index {
     public void writeToFile() {
         try {
             CSVPrinter printer = FileManager.writeCsv(filePath, column.getName(), "address");
-            for (Record record : entries.keySet())
-                for (Address address : entries.get(record))
-                    printer.printRecord(column.getType() == Type.INTEGER ? Integer.valueOf(record.getValue()) : record.getValue(), address);
-            printer.close(true);
+            if (printer != null) {
+                for (Record record : entries.keySet())
+                    for (Address address : entries.get(record))
+                        printer.printRecord(column.getType() == Type.INTEGER ? Integer.valueOf(record.getValue()) : record.getValue(), address);
+                printer.close(true);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -287,7 +287,8 @@ public class QueryParser {
                                     case "index":
                                         if (arguments.length == 5) {
                                             if (loadedDatabase != null && loadedDatabase.containsTable(arguments[2])) {
-                                                if (loadedDatabase.getTable(arguments[2]).createIndex(loadedDatabase.getTable(arguments[2]).getColumn(arguments[4]))) {
+                                                if (loadedDatabase.getTable(arguments[2]).containsColumn(arguments[4]) &&
+                                                        loadedDatabase.getTable(arguments[2]).createIndex(loadedDatabase.getTable(arguments[2]).getColumn(arguments[4]))) {
                                                     result = parse("show" + " " + loadedDatabase.getName() + " " + loadedDatabase.getTable(arguments[2]).getName());
                                                 }
                                                 else {
@@ -328,10 +329,18 @@ public class QueryParser {
                     switch (arguments[1]) {
                         case "database":
                             if (arguments.length == 3) {
-                                if (connection.removeDatabase(arguments[2]))
-                                    result = parse("show");
-                                else
+                                if (connection.containsDatabase(arguments[2])) {
+                                    loadedDatabase = null;
+                                    if (!connection.removeDatabase(arguments[2])) {
+                                        result = "Database could not be removed. Please exit and restart the program, and try again.\n";
+                                    }
+                                    else {
+                                        result = parse("show");
+                                    }
+                                }
+                                else {
                                     result = DB_NOT_FOUND + arguments[2];
+                                }
                             }
                             else {
                                 result = HELP_REMOVE;
@@ -455,7 +464,7 @@ public class QueryParser {
                             if (table.addRow(records))
                                 result = new Row(records, table.getColumns(), table.getPrimaryKey()).toString() + "\n";
                             else
-                                result = HELP_ADD;
+                                result = "Row with the same value for the primary key column already exists.\n";
                         }
                         else {
                             result = HELP_ADD;
@@ -490,22 +499,26 @@ public class QueryParser {
                                     result = "More than one row matches the stated criteria";
                                 }
                                 else {
-                                    Row row = rows.get(0);
-                                    if (!table.removeRow(row)) {
-                                        result = HELP_UPDATE;
+                                    String[] recordsArray = arguments[8].substring(1, arguments[8].length() - 1).split(",");
+                                    if (recordsArray.length == table.getColumns().size()) {
+                                        Row row = rows.get(0);
+                                        if (!table.removeRow(row)) {
+                                            result = "Row was not found.";
+                                            break;
+                                        }
+                                        List<Record> records = new ArrayList<>();
+                                        int loopCount = 0;
+                                        for (Iterator<Column> it = table.getColumns().iterator(); it.hasNext() ; loopCount++)
+                                            records.add(new Record(recordsArray[loopCount].trim().replace("\"", ""), it.next().getType()));
+                                        if (table.addRow(records))
+                                            result = new Row(records, table.getColumns(), table.getPrimaryKey()).toString() + "\n";
+                                        else
+                                            result = "There was a problem with the matched row, and it was deleted. Sorry.";
                                     }
                                     else {
-                                        String[] recordsArray = arguments[8].substring(1, arguments[4].length() - 1).split(",");
-                                        if (recordsArray.length == table.getColumns().size()) {
-                                            List<Record> records = new ArrayList<>();
-                                            int loopCount = 0;
-                                            for (Iterator<Column> it = table.getColumns().iterator(); it.hasNext() ; loopCount++)
-                                                records.add(new Record(recordsArray[loopCount].trim().replace("\"", ""), it.next().getType()));
-                                            if (table.addRow(records))
-                                                result = new Row(records, table.getColumns(), table.getPrimaryKey()).toString() + "\n";
-                                            else
-                                                result = HELP_UPDATE;
-                                        }
+                                        result = "Number of records specified must be equal to the number of columns.\n" +
+                                                "\tHint: when adding a blank record in a row, make sure to include all the commas necessary,\n" +
+                                                "\ti.e. a row of 3 records would be (record1,,record3)\n";
                                     }
                                 }
                             }

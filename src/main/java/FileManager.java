@@ -73,7 +73,7 @@ public class FileManager {
                     return FileVisitResult.CONTINUE;
                 }
             });
-        } catch (NoSuchFileException e) {
+        } catch (DirectoryNotEmptyException | NoSuchFileException | AccessDeniedException e) {
             return false;
         } catch (IOException e) {
             e.printStackTrace();
@@ -141,6 +141,8 @@ public class FileManager {
         try {
             Writer out = Files.newBufferedWriter(path);
             return new CSVPrinter(out, (columns.length == 0) ? CSVFormat.DEFAULT : CSVFormat.DEFAULT.withHeader(columns));
+        } catch (AccessDeniedException e) {
+            return null;
         } catch (IOException e) {
             e.printStackTrace();
             return null;

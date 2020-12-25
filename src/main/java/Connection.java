@@ -54,7 +54,7 @@ public class Connection {
 
     public boolean removeDatabase(String name) {
         if (!containsDatabase(name)) return false;
-        FileManager.clearDirectory(Paths.get(root.toString(), name));
+        if (!FileManager.clearDirectory(Paths.get(root.toString(), name))) return false;
         databases.remove(getDatabase(name));
         return true;
     }
