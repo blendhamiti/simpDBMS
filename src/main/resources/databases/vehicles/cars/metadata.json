@@ -1,1 +1,0 @@
-{"columns":[{"name":"brand","type":"STRING"},{"name":"color","type":"STRING"},{"name":"price","type":"INTEGER"}],"rowCount":4,"primaryKey":"brand"}
