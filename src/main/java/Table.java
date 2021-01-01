@@ -358,7 +358,7 @@ public class Table {
     }
 
     public boolean removeRow(Row row) {
-        if (!containsRow(row)) return false;
+        if (primaryKey != null && !containsRow(row)) return false;
         List<Row> rows = getRows();
         int lineNumber = 0;
         boolean isRemoved = false;
