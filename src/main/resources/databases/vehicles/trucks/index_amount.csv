@@ -1,0 +1,17 @@
+amount,addresscreate database vehicles
+load vehicles
+create table cars columns (brand,STRING;color,STRING;price,INTEGER) brand
+add table cars records ("Tesla",red,90000)
+add table cars records ("Toyota",yellow,15000)
+add table cars records ("Hyundai",gray,12000)
+add table cars records ("BMW",black,30000)
+create table cars index price
+create table trucks columns (brand,STRING;amount,INTEGER)
+add table trucks records ("Tesla",4)
+add table trucks records ("Volvo",2)
+add table trucks records ("Mercedes",8)
+create table trucks index amount
+
+2,2
+4,1
+8,3

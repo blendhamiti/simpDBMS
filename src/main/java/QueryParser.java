@@ -168,6 +168,8 @@ public class QueryParser {
 
         command = "Command is: " + Arrays.toString(arguments);
 
+        if (arguments.length == 0) arguments = new String[]{"help"};
+
         switch (arguments[0]) {
             case "show":
                 switch (arguments.length) {
