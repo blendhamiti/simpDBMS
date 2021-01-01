@@ -40,7 +40,7 @@
                     <configuration>
                         <mainClass>User</mainClass>
 <!--                        <arguments>-->
-<!--                            <argument>src/main/resources/databases</argument>-->
+<!--                            <argument>${path}</argument>-->
 <!--                        </arguments>-->
                     </configuration>
                 </plugin>
